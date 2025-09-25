@@ -1,4 +1,4 @@
-prefix=/Users/fuguoqiang/Desktop/librawspeed/deps/LibRaw-Source/LibRaw-0.21.4/build/linux-arm64
+prefix=/Users/fuguoqiang/Documents/workspace/infra/librawspeed/deps/LibRaw-Source/LibRaw-0.21.4/build/linux-arm64
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

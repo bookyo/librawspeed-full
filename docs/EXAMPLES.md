@@ -1,6 +1,6 @@
 # 使用示例
 
-**版本 1.0.33** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed) 上可用！🎉
+**版本 1.0.34** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed) 上可用！🎉
 
 ## 基础 RAW 文件处理
 
