@@ -52,12 +52,15 @@
   "dependencies": {
     "chroma-js": "^3.1.2",
     "exiftool-vendored": "^30.5.0",
-    "node-addon-api": "^7.1.1",
-    "sharp": "^0.33.5"
+    "node-addon-api": "^7.1.1"
   },
   "devDependencies": {
     "bumpp": "^10.2.3",
-    "node-gyp": "^10.0.0"
+    "node-gyp": "^10.0.0",
+    "sharp": "^0.33.5"
+  },
+  "peerDependencies": {
+    "sharp": ">=0.33 <0.34"
   },
   "engines": {
     "node": ">=14.0.0"
