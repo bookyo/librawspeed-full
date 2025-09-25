@@ -38,7 +38,7 @@
     "test:samples": "node test/test-samples.js",
     "test:compare": "node test/compare-samples.js",
     "prepublishOnly": "npm run test",
-    "install": "node-gyp rebuild",
+    "install": "node scripts/install.js",
     "clean": "node-gyp clean",
     "setup:github": "node scripts/github-setup.js",
     "docs:generate": "node scripts/generate-docs.js",
@@ -67,6 +67,8 @@
   },
   "gypfile": true,
   "binary": {
+    "module_name": "libraw_addon",
+    "module_path": "./build/Release/",
     "napi_versions": [
       3,
       4,
@@ -93,7 +95,7 @@
   "files": [
     "lib/**/*",
     "src/**/*",
-    "build/**/*",
+    "build/Release/**/*",
     "deps/**/*",
     "types/**/*",
     "docs/**/*",
