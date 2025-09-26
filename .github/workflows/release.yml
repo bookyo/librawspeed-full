@@ -160,6 +160,17 @@ jobs:
         run: |
           npx prebuildify --napi --platform darwin --arch ${{ matrix.arch }}
 
+      - name: Verify prebuild output (macOS)
+        if: matrix.platform == 'darwin'
+        shell: bash
+        run: |
+          echo "Verifying macOS prebuild exists"
+          ls -la prebuilds || true
+          if [ ! -f prebuilds/darwin-arm64/librawspeed.node ]; then
+            echo "Missing macOS prebuild at prebuilds/darwin-arm64/librawspeed.node" >&2
+            exit 2
+          fi
+
       - name: Generate prebuild (Linux)
         if: matrix.platform == 'linux'
         shell: bash
@@ -237,30 +248,29 @@ jobs:
         run: |
           set -e
           echo "Validating binary formats:"
-          if [ -f prebuilds/win32-x64/librawspeed.node ]; then
-            # Expect PE/COFF (starts with MZ)
-            if hexdump -n 2 -e '2/1 "%02x"' prebuilds/win32-x64/librawspeed.node | grep -qi '^4d5a$'; then
-              echo "OK: win32-x64 is PE/COFF"
-            else
-              echo "ERROR: win32-x64/librawspeed.node is not PE/COFF (likely wrong platform)" >&2
-              file prebuilds/win32-x64/librawspeed.node || true
-              exit 1
-            fi
+          # Require both platforms present
+          if [ ! -f prebuilds/win32-x64/librawspeed.node ]; then
+            echo "ERROR: missing prebuilds/win32-x64/librawspeed.node" >&2
+            exit 1
           fi
-          if [ -f prebuilds/darwin-arm64/librawspeed.node ]; then
-            # Expect Mach-O (starts with cffaedfe)
-            if hexdump -n 4 -e '4/1 "%02x"' prebuilds/darwin-arm64/librawspeed.node | grep -qi '^cffaedfe$'; then
-              echo "OK: darwin-arm64 is Mach-O"
-            else
-              echo "ERROR: darwin-arm64/librawspeed.node is not Mach-O" >&2
-              file prebuilds/darwin-arm64/librawspeed.node || true
-              exit 1
-            fi
+          if [ ! -f prebuilds/darwin-arm64/librawspeed.node ]; then
+            echo "ERROR: missing prebuilds/darwin-arm64/librawspeed.node" >&2
+            exit 1
           fi
-          # Require at least one platform present
-          if [ ! -f prebuilds/win32-x64/librawspeed.node ] && [ ! -f prebuilds/darwin-arm64/librawspeed.node ]; then
-            echo "ERROR: no prebuilds found under prebuilds/" >&2
-            ls -R prebuilds || true
+          # Windows must be PE/COFF (MZ)
+          if hexdump -n 2 -e '2/1 "%02x"' prebuilds/win32-x64/librawspeed.node | grep -qi '^4d5a$'; then
+            echo "OK: win32-x64 is PE/COFF"
+          else
+            echo "ERROR: win32-x64/librawspeed.node is not PE/COFF" >&2
+            file prebuilds/win32-x64/librawspeed.node || true
+            exit 1
+          fi
+          # macOS must be Mach-O (cffaedfe)
+          if hexdump -n 4 -e '4/1 "%02x"' prebuilds/darwin-arm64/librawspeed.node | grep -qi '^cffaedfe$'; then
+            echo "OK: darwin-arm64 is Mach-O"
+          else
+            echo "ERROR: darwin-arm64/librawspeed.node is not Mach-O" >&2
+            file prebuilds/darwin-arm64/librawspeed.node || true
             exit 1
           fi
 
