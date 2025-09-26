@@ -82,19 +82,22 @@ if [ "$PLATFORM" = "darwin" ]; then
   echo "🍎 macOS 优化: 禁用缩略图生成以减少构建时间"
   echo "   保留的功能: dcraw 兼容性, rawspeed 解码器, jpeg 支持"
 elif [ "$PLATFORM" = "windows" ]; then
-  # Windows 特殊配置
-  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-thumbnail"
-  echo "🪟 Windows 优化: 禁用缩略图生成以减少构建时间"
+  # Windows 特殊配置 - 使用 MSVC 构建
+  echo "🪟 Windows 构建: 使用 MSVC 和 Makefile.msvc"
   echo "   保留的功能: dcraw 兼容性, rawspeed 解码器, jpeg 支持"
   echo "   使用 MSVC 编译器"
   
-  # Windows 上可能需要特殊的编译器设置
-  export CC=cl
-  export CXX=cl
-  echo "   设置编译器: CC=$CC, CXX=$CXX"
+  # Windows 上使用 MSVC 构建，不需要 configure
+  echo "   跳过 configure，直接使用 nmake"
+  SKIP_CONFIGURE=true
+else
+  # 其他平台使用标准 configure
+  SKIP_CONFIGURE=false
 fi
 
-./configure $CONFIGURE_OPTS --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
+if [ "$SKIP_CONFIGURE" != "true" ]; then
+  ./configure $CONFIGURE_OPTS --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
+fi
 
 # 构建
 echo "🔨 编译 LibRaw..."
@@ -143,14 +146,25 @@ monitor_resources() {
 monitor_resources &
 MONITOR_PID=$!
 
-# 使用更详细的构建输出
-if ! make -j$JOBS VERBOSE=1; then
-  echo "❌ 编译失败，尝试使用单线程编译..."
-  echo "🔄 单线程编译开始..."
-  if ! make -j1 VERBOSE=1; then
-    echo "❌ 单线程编译也失败，请检查错误信息"
+# 根据平台选择构建方式
+if [ "$PLATFORM" = "windows" ]; then
+  # Windows 使用 nmake
+  echo "🪟 使用 nmake 构建 LibRaw..."
+  if ! nmake -f Makefile.msvc; then
+    echo "❌ nmake 编译失败，请检查错误信息"
     kill $MONITOR_PID 2>/dev/null
     exit 1
+  fi
+else
+  # 其他平台使用 make
+  if ! make -j$JOBS VERBOSE=1; then
+    echo "❌ 编译失败，尝试使用单线程编译..."
+    echo "🔄 单线程编译开始..."
+    if ! make -j1 VERBOSE=1; then
+      echo "❌ 单线程编译也失败，请检查错误信息"
+      kill $MONITOR_PID 2>/dev/null
+      exit 1
+    fi
   fi
 fi
 
@@ -162,7 +176,34 @@ echo "⏰ 编译完成时间: $(date)"
 
 # 安装
 echo "📦 安装 LibRaw..."
-make install
+if [ "$PLATFORM" = "windows" ]; then
+  # Windows 不需要 make install，文件已经在正确位置
+  echo "🪟 Windows 构建完成，文件已在正确位置"
+  # 创建安装目录结构
+  mkdir -p "build/${PLATFORM}-${ARCH}/lib"
+  mkdir -p "build/${PLATFORM}-${ARCH}/bin"
+  mkdir -p "build/${PLATFORM}-${ARCH}/include"
+  
+  # 复制生成的文件
+  if [ -f "lib/libraw_static.lib" ]; then
+    cp "lib/libraw_static.lib" "build/${PLATFORM}-${ARCH}/lib/"
+    echo "   复制 libraw_static.lib"
+  fi
+  if [ -f "lib/libraw.lib" ]; then
+    cp "lib/libraw.lib" "build/${PLATFORM}-${ARCH}/lib/"
+    echo "   复制 libraw.lib"
+  fi
+  if [ -f "bin/libraw.dll" ]; then
+    cp "bin/libraw.dll" "build/${PLATFORM}-${ARCH}/bin/"
+    echo "   复制 libraw.dll"
+  fi
+  if [ -d "libraw" ]; then
+    cp -r "libraw" "build/${PLATFORM}-${ARCH}/include/"
+    echo "   复制头文件"
+  fi
+else
+  make install
+fi
 
 # 检查构建结果
 echo "🔍 检查构建结果..."
@@ -184,6 +225,12 @@ if [ "$PLATFORM" = "windows" ]; then
   find "$BUILD_DIR" -name "*.h" | head -5
   echo "  检查 LibRaw 源码目录:"
   find "deps/LibRaw-Source/LibRaw-0.21.4" -name "*.lib" -o -name "*.a" -o -name "*.dll" | head -10
+  echo "  检查 LibRaw 源码根目录:"
+  ls -la "deps/LibRaw-Source/LibRaw-0.21.4/"
+  echo "  检查 LibRaw 源码 lib 目录:"
+  ls -la "deps/LibRaw-Source/LibRaw-0.21.4/lib/" 2>/dev/null || echo "lib 目录不存在"
+  echo "  检查 LibRaw 源码 .libs 目录:"
+  ls -la "deps/LibRaw-Source/LibRaw-0.21.4/.libs/" 2>/dev/null || echo ".libs 目录不存在"
 else
   echo "📁 构建文件列表:"
   find "$BUILD_DIR" -type f | head -10
