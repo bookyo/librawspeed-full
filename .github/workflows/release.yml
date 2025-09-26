@@ -220,9 +220,10 @@ jobs:
       # Tests已在各平台构建作业跑过，这里跳过
 
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_IGNORE_SCRIPTS: "true"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
