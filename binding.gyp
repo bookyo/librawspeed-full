@@ -24,15 +24,7 @@
               "ExceptionHandling": 1,
               "RuntimeLibrary": 2
             }
-          },
-          "copies": [
-            {
-              "destination": "<(module_root_dir)/build/Release/",
-              "files": [
-                "<!(node -e \"const p=require('path');const fs=require('fs');const basePath='deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64';const possiblePaths=[p.resolve(basePath,'bin/libraw.dll'),p.resolve(basePath,'lib/libraw.dll'),p.resolve(basePath,'libraw.dll'),p.resolve(basePath,'.libs/libraw.dll')];let foundPath=null;for(const path of possiblePaths){if(fs.existsSync(path)){foundPath=path;break;}}if(foundPath){process.stdout.write(foundPath);}else{console.log('LibRaw DLL not found, skipping copy. Searched paths:',possiblePaths);process.exit(0);}\")"
-              ]
-            }
-          ]
+          }
         }],
         ["OS=='mac'", {
           "libraries": [
