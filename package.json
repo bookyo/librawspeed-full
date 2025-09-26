@@ -5,25 +5,11 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "node scripts/build-libraw.js && node-gyp rebuild",
-    "cross-compile": "node scripts/cross-compile.js",
-    "cross-compile:all": "node scripts/cross-compile.js win32 && node scripts/cross-compile.js darwin x64 && node scripts/cross-compile.js darwin arm64 && node scripts/cross-compile.js linux x64 && node scripts/cross-compile.js linux arm64",
-    "cross-compile:win32": "node scripts/cross-compile.js win32",
-    "cross-compile:darwin-x64": "node scripts/cross-compile.js darwin x64",
-    "cross-compile:darwin-arm64": "node scripts/cross-compile.js darwin arm64",
-    "cross-compile:linux-x64": "node scripts/cross-compile.js linux x64",
-    "cross-compile:linux-arm64": "node scripts/cross-compile.js linux arm64",
-    "cross-compile:verify": "node scripts/verify-cross-compile.js",
-    "cross-compile:summary": "node scripts/verify-cross-compile.js --summary",
+    "build": "bash scripts/download-lcms2.sh && bash scripts/download-libraw.sh && node-gyp rebuild",
     "check:env": "node scripts/check-environment.js",
     "rebuild": "npm run clean && npm run build",
     "prebuildify": "prebuildify --napi",
     "prebuildify:all": "prebuildify --napi --all",
-    "prebuildify:windows": "prebuildify --napi --platform win32 --arch x64",
-    "prebuildify:darwin": "prebuildify --napi --platform darwin --arch x64",
-    "prebuildify:darwin-arm64": "prebuildify --napi --platform darwin --arch arm64",
-    "prebuildify:linux": "prebuildify --napi --platform linux --arch x64",
-    "prebuildify:linux-arm64": "prebuildify --napi --platform linux --arch arm64",
     "test": "node test/index.js",
     "test:all": "node test/index.js full",
     "test:quick": "node test/index.js quick",
@@ -89,7 +75,7 @@
     ]
   },
   "napi": {
-    "name": "libraw_addon",
+    "name": "librawspeed",
     "triples": {
       "defaults": true,
       "additional": [
@@ -103,22 +89,13 @@
   },
   "files": [
     "lib/**/*",
+    "prebuilds/**/*",
     "src/**/*",
-    "build/Release/**/*",
-    "deps/**/*",
     "types/**/*",
-    "docs/**/*",
-    "examples/**/*",
-    "scripts/**/*",
     "binding.gyp",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md",
-    "CONTRIBUTING.md",
-    "IMPLEMENTATION_SUMMARY.md",
-    "UPGRADE.md",
-    "PUBLICATION.md",
-    ".bumpprc"
+    "CHANGELOG.md"
   ],
   "os": [
     "win32",
