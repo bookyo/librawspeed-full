@@ -152,7 +152,11 @@ monitor_resources() {
     if command -v free >/dev/null 2>&1; then
       echo "  内存: $(free -h | awk '/^Mem:/{print $3"/"$2}')"
     fi
-    echo "  CPU: $(top -l 1 | grep "CPU usage" | awk '{print $3}' 2>/dev/null || echo 'N/A')"
+    if command -v top >/dev/null 2>&1; then
+      echo "  CPU: $(top -l 1 2>/dev/null | grep "CPU usage" | awk '{print $3}' 2>/dev/null || echo 'N/A')"
+    else
+      echo "  CPU: N/A"
+    fi
     echo "  负载: $(uptime | awk -F'load average:' '{print $2}' 2>/dev/null || echo 'N/A')"
     sleep 30
   done
@@ -193,7 +197,19 @@ if exist lib\libraw_static.lib (
 )
 BAT
 
-  if ! cmd /c "$BUILD_BAT"; then
+  # 打印批处理内容，便于调试
+  if command -v cygpath >/dev/null 2>&1; then
+    BAT_ABS=$(cygpath -w "$(pwd)/$BUILD_BAT")
+  else
+    # Git Bash 提供 pwd -W 输出 Windows 路径
+    WIN_PWD=$(pwd -W 2>/dev/null || pwd)
+    BAT_ABS="$WIN_PWD\\$BUILD_BAT"
+  fi
+
+  echo "📄 批处理文件路径: $BAT_ABS"
+  cmd /c type "$BAT_ABS" || true
+
+  if ! cmd /c "$BAT_ABS"; then
     echo "❌ nmake 编译失败，请检查错误信息"
     kill $MONITOR_PID 2>/dev/null
     exit 1
