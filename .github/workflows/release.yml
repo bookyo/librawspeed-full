@@ -45,6 +45,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Display hardware specifications
+        shell: bash
         run: |
           echo "🖥️  固定硬件规格配置:"
           echo "=================="
