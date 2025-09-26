@@ -50,9 +50,13 @@ echo "📋 架构: $ARCH"
 # 进入源码目录
 cd "$SOURCE_DIR"
 
-# 生成 configure 脚本
-echo "🔧 生成 configure 脚本..."
-autoreconf --install
+# 检查并使用 configure 脚本
+if [ ! -f "./configure" ]; then
+  echo "🔧 生成 configure 脚本..."
+  autoreconf --install
+else
+  echo "✅ 使用预生成的 configure 脚本"
+fi
 
 # 设置编译选项，确保使用 -fPIC
 export CFLAGS="-fPIC -O2"
