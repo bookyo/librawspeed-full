@@ -220,11 +220,42 @@ jobs:
           path: .
           merge-multiple: true
 
+      - name: Clean existing prebuilds in workspace
+        shell: bash
+        run: |
+          rm -rf prebuilds || true
+
       - name: Show prebuilds in workspace
         run: |
           echo "Workspace prebuilds tree:" &&
           if [ -d prebuilds ]; then ls -R prebuilds; else echo "no prebuilds dir"; fi
         shell: bash
+
+      - name: Validate prebuild binaries (magic)
+        shell: bash
+        run: |
+          set -e
+          echo "Validating binary formats:"
+          if [ -f prebuilds/win32-x64/librawspeed.node ]; then
+            # Expect PE/COFF (starts with MZ)
+            if hexdump -n 2 -e '2/1 "%02x"' prebuilds/win32-x64/librawspeed.node | grep -qi '^4d5a$'; then
+              echo "OK: win32-x64 is PE/COFF"
+            else
+              echo "ERROR: win32-x64/librawspeed.node is not PE/COFF (likely wrong platform)" >&2
+              file prebuilds/win32-x64/librawspeed.node || true
+              exit 1
+            fi
+          fi
+          if [ -f prebuilds/darwin-arm64/librawspeed.node ]; then
+            # Expect Mach-O (starts with cffaedfe)
+            if hexdump -n 4 -e '4/1 "%02x"' prebuilds/darwin-arm64/librawspeed.node | grep -qi '^cffaedfe$'; then
+              echo "OK: darwin-arm64 is Mach-O"
+            else
+              echo "ERROR: darwin-arm64/librawspeed.node is not Mach-O" >&2
+              file prebuilds/darwin-arm64/librawspeed.node || true
+              exit 1
+            fi
+          fi
 
       - name: Install dependencies (no scripts)
         run: npm ci --ignore-scripts
