@@ -27,6 +27,13 @@ jobs:
             runner-type: windows-2022
             cores: 10
             memory: 32
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            runner: ubuntu-latest
+            runner-type: ubuntu-22.04
+            cores: 4
+            memory: 16
 
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
@@ -151,6 +158,9 @@ jobs:
           PREBUILD_PLATFORM: ${{ matrix.platform }}
           PREBUILD_ARCH: ${{ matrix.arch }}
 
+      - name: Run tests for platform
+        run: npm test
+
       - name: Upload prebuild artifact
         uses: actions/upload-artifact@v4
         with:
@@ -208,11 +218,10 @@ jobs:
           name: prebuilds-all-platforms
           path: prebuilds/all-platforms/
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (no scripts)
+        run: npm ci --ignore-scripts
 
-      - name: Run tests
-        run: npm test
+      # Tests已在各平台构建作业跑过，这里跳过
 
       - name: Publish to npm
         run: npm publish
@@ -232,6 +241,7 @@ jobs:
             ### 📦 包含的预构建文件
             - macOS ARM64 (Apple Silicon)
             - Windows x64
+            - Linux x64
 
             ### 🚀 安装
             ```bash
