@@ -6,18 +6,15 @@
 
 | 平台 | Runner | 固定硬件规格 | 并行任务 | 说明 |
 |------|--------|-------------|----------|------|
-| Linux x64 | `ubuntu-22.04` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Linux 环境 |
-| Linux ARM64 | `ubuntu-22.04` | 10-core CPU, 32GB RAM | 8 个 | 高性能 ARM64 环境 |
-| macOS x64 | `macos-13` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Intel Mac 环境 |
-| macOS ARM64 | `macos-13` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Apple Silicon 环境 |
-| Windows x64 | `windows-2022` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Windows 环境 |
+| macOS ARM64 | `macos-13` | 10-core CPU, 32GB RAM | 动态 | 高性能 Apple Silicon 环境 |
+| Windows x64 | `windows-2022` | 10-core CPU, 32GB RAM | 动态 | 高性能 Windows 环境 |
 
 ### 配置特点
 
-- **固定规格**: 所有平台统一使用 10 核心 32GB 内存
-- **并行任务**: 使用 8 个并行任务，为系统保留 2 个核心
+- **精简配置**: 专注于 macOS ARM64 和 Windows x64 两个主要平台
+- **动态并行**: 根据实际硬件规格动态调整并行任务数
 - **高性能**: 专为快速构建优化的配置
-- **一致性**: 所有平台使用相同的硬件规格，确保构建一致性
+- **稳定性**: 减少平台数量，提高构建稳定性
 
 ### 动态构建优化
 

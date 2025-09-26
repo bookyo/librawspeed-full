@@ -9,30 +9,9 @@ on:
 jobs:
   build-prebuilds:
     strategy:
-      max-parallel: 3 # 最多同时运行3个平台，避免资源竞争
+      max-parallel: 2 # 最多同时运行2个平台，避免资源竞争
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
-            arch: x64
-            runner: ubuntu-latest
-            runner-type: ubuntu-22.04
-            cores: 10
-            memory: 32
-          - os: ubuntu-latest
-            platform: linux
-            arch: arm64
-            runner: ubuntu-latest
-            runner-type: ubuntu-22.04
-            cores: 10
-            memory: 32
-          - os: macos-latest
-            platform: darwin
-            arch: x64
-            runner: macos-latest
-            runner-type: macos-13
-            cores: 10
-            memory: 32
           - os: macos-latest
             platform: darwin
             arch: arm64
@@ -226,10 +205,7 @@ jobs:
             ## 🎉 LibRaw Node.js 模块发布
 
             ### 📦 包含的预构建文件
-            - Linux x64
-            - Linux ARM64
-            - macOS x64
-            - macOS ARM64
+            - macOS ARM64 (Apple Silicon)
             - Windows x64
 
             ### 🚀 安装
