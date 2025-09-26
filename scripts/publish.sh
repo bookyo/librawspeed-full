@@ -26,23 +26,9 @@ if [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "master" ]; then
     fi
 fi
 
-# 构建所有平台的预构建文件
-echo "🏗️  构建所有平台的预构建文件..."
-npm run build:all
-
 # 运行测试
 echo "🧪 运行测试..."
 npm test
-
-# 显示预构建文件
-echo "📁 生成的预构建文件："
-find prebuilds -name "*.node" -type f | sort
-
-# 显示文件统计
-echo ""
-echo "📊 文件统计："
-echo "总文件数: $(find prebuilds -name "*.node" -type f | wc -l)"
-echo "总大小: $(du -sh prebuilds/ | cut -f1)"
 
 # 确认发布
 echo ""

@@ -32,9 +32,9 @@ npm run test:quick
 
 ## 📦 发布流程
 
-### 方法一：使用 bumpp 自动发布
+### 方法一：使用 bumpp 自动发布（推荐）
 ```bash
-# 自动构建所有平台 + 更新版本号 + 发布
+# 更新版本号 + 推送到 Git + 触发云端构建
 npm run release        # 自动选择版本类型
 npm run release:patch  # 补丁版本 (1.0.0 -> 1.0.1)
 npm run release:minor  # 小版本 (1.0.0 -> 1.1.0)
@@ -49,21 +49,21 @@ bash scripts/publish.sh
 
 ### 方法三：分步发布
 ```bash
-# 1. 构建所有平台的预构建文件
-npm run build:all
-
-# 2. 运行测试
+# 1. 运行测试
 npm test
 
-# 3. 使用 bumpp 更新版本号
+# 2. 使用 bumpp 更新版本号
 bumpp patch  # 或 minor, major
 
-# 4. 推送到 Git
+# 3. 推送到 Git（触发云端构建和发布）
 git push --follow-tags
-
-# 5. 发布到 npm
-npm publish
 ```
+
+### 🌐 云端构建流程
+推送标签到 GitHub 后，会自动触发：
+1. **多平台构建**: 在 GitHub Actions 中为所有平台构建预构建文件
+2. **自动测试**: 运行完整的测试套件
+3. **自动发布**: 发布到 npm 和创建 GitHub Release
 
 ## 🔧 预构建文件管理
 
