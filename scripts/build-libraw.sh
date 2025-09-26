@@ -171,6 +171,9 @@ if [ "$PLATFORM" = "windows" ]; then
     kill $MONITOR_PID 2>/dev/null
     exit 1
   fi
+  
+  echo "🔍 搜索生成的 .lib 文件..."
+  find . -name "*.lib" -o -name "*.a"
 else
   # 其他平台使用 make
   if ! make -j$JOBS VERBOSE=1; then
