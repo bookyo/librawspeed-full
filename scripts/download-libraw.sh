@@ -20,7 +20,8 @@ mkdir -p "$(dirname "$SOURCE_DIR")"
 
 # 下载源码
 cd "$TMP_DIR"
-curl -L -o "LibRaw-${VERSION}.tar.gz" "$URL"
+# 使用 curl 的重试机制
+curl -L --retry 3 --retry-delay 5 --connect-timeout 30 --max-time 300 -o "LibRaw-${VERSION}.tar.gz" "$URL"
 tar xf "LibRaw-${VERSION}.tar.gz"
 
 # 移动到目标目录
