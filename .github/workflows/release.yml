@@ -170,35 +170,11 @@ jobs:
   collect-prebuilds:
     runs-on: ubuntu-latest
     needs: build-prebuilds
-    if: always()
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download all prebuild artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: prebuilds/
-
-      - name: Merge prebuilds
-        run: |
-          echo "🔗 合并所有平台的预构建文件..."
-          mkdir -p prebuilds/all-platforms
-          find prebuilds -mindepth 2 -name "*.node" -exec cp -v {} prebuilds/all-platforms/ \;
-          echo "📊 最终预构建文件结构:"
-          ls -R prebuilds/all-platforms
-
-      - name: Upload unified prebuilds
-        uses: actions/upload-artifact@v4
-        with:
-          name: prebuilds-all-platforms
-          path: prebuilds/all-platforms/
-          retention-days: 30
+    if: false
 
   release:
     runs-on: ubuntu-latest
-    needs: collect-prebuilds
+    needs: build-prebuilds
     timeout-minutes: 10
 
     steps:
@@ -211,11 +187,12 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Download prebuilds
+      - name: Download all prebuild artifacts
         uses: actions/download-artifact@v4
         with:
-          name: prebuilds-all-platforms
-          path: prebuilds/all-platforms/
+          pattern: prebuild-*
+          path: .
+          merge-multiple: true
 
       - name: Install dependencies (no scripts)
         run: npm ci --ignore-scripts
