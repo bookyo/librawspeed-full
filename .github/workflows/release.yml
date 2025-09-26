@@ -195,8 +195,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: prebuild-${{ matrix.platform }}-${{ matrix.arch }}
-          path: prebuilds/
+          path: prebuilds/**
           retention-days: 30
+          if-no-files-found: error
 
   release:
     runs-on: ubuntu-latest
@@ -222,7 +223,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: prebuild-*
-          path: .
+          path: prebuilds
           merge-multiple: true
 
       - name: Show prebuilds in workspace
@@ -255,6 +256,12 @@ jobs:
               file prebuilds/darwin-arm64/librawspeed.node || true
               exit 1
             fi
+          fi
+          # Require at least one platform present
+          if [ ! -f prebuilds/win32-x64/librawspeed.node ] && [ ! -f prebuilds/darwin-arm64/librawspeed.node ]; then
+            echo "ERROR: no prebuilds found under prebuilds/" >&2
+            ls -R prebuilds || true
+            exit 1
           fi
 
       - name: Install dependencies (no scripts)
