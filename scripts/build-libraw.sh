@@ -77,9 +77,9 @@ CONFIGURE_OPTS="--enable-static --disable-shared --disable-openmp --disable-exam
 
 # 为不同平台添加优化
 if [ "$PLATFORM" = "darwin" ]; then
-  # macOS 只禁用真正不必要的功能
-  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-thumbnail"
-  echo "🍎 macOS 优化: 禁用缩略图生成以减少构建时间"
+  # macOS 优化配置 - 禁用一些功能以减少构建时间
+  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-thumbnail --disable-djpeg --disable-lcms"
+  echo "🍎 macOS 优化: 禁用缩略图、djpeg 和 lcms 以减少构建时间"
   echo "   保留的功能: dcraw 兼容性, rawspeed 解码器, jpeg 支持"
 elif [ "$PLATFORM" = "windows" ]; then
   # Windows 特殊配置 - 使用 MSVC 构建
@@ -111,15 +111,28 @@ echo "  CPU 核心数: $ACTUAL_CORES"
 echo " 内存大小: ${ACTUAL_MEMORY}MB"
 
 # 保守的并行任务配置，避免资源竞争
-if [ "$ACTUAL_MEMORY" -gt 16384 ]; then
-  # 16GB+ 内存
-  JOBS=$((ACTUAL_CORES > 6 ? 6 : ACTUAL_CORES))
-elif [ "$ACTUAL_MEMORY" -gt 8192 ]; then
-  # 8-16GB 内存
-  JOBS=$((ACTUAL_CORES > 4 ? 4 : ACTUAL_CORES))
+if [ "$PLATFORM" = "darwin" ]; then
+  # macOS 使用更保守的并行任务数
+  if [ "$ACTUAL_MEMORY" -gt 16384 ]; then
+    JOBS=4  # macOS 16GB+ 内存使用 4 个并行任务
+  elif [ "$ACTUAL_MEMORY" -gt 8192 ]; then
+    JOBS=3  # macOS 8-16GB 内存使用 3 个并行任务
+  else
+    JOBS=2  # macOS 8GB 以下内存使用 2 个并行任务
+  fi
+  echo "🍎 macOS 平台，使用保守的并行任务配置"
 else
-  # 8GB 以下内存
-  JOBS=$((ACTUAL_CORES > 2 ? 2 : ACTUAL_CORES))
+  # 其他平台使用标准配置
+  if [ "$ACTUAL_MEMORY" -gt 16384 ]; then
+    # 16GB+ 内存
+    JOBS=$((ACTUAL_CORES > 6 ? 6 : ACTUAL_CORES))
+  elif [ "$ACTUAL_MEMORY" -gt 8192 ]; then
+    # 8-16GB 内存
+    JOBS=$((ACTUAL_CORES > 4 ? 4 : ACTUAL_CORES))
+  else
+    # 8GB 以下内存
+    JOBS=$((ACTUAL_CORES > 2 ? 2 : ACTUAL_CORES))
+  fi
 fi
 
 echo "📊 使用 $JOBS 个并行任务进行编译 (基于实际硬件: ${ACTUAL_MEMORY}MB 内存 + $ACTUAL_CORES 核心)"
