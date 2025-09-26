@@ -89,17 +89,21 @@ jobs:
 
       - name: Install build tools (Windows)
         if: matrix.platform == 'win32'
+        shell: cmd
         run: |
-          echo "🪟 验证 Windows 构建环境..."
-          (where cl && where nmake && where cmake) || (echo "错误：未找到关键构建工具 (cl, nmake, cmake)。" && exit 1)
-          echo "✅ 所有构建工具均已找到。"
-          echo "Using pre-installed MSVC tools"
-          echo "检查 MSVC 环境:"
+          echo 🪟 验证 Windows 构建环境...
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
+          echo ✅ 已加载 VS 开发者命令环境
           where cl
           cl /?
-          echo "检查构建工具:"
           where nmake
           where cmake
+
+      - name: Setup MSVC (Windows)
+        if: matrix.platform == 'win32'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Download LibRaw dependencies
         run: bash scripts/download-dependencies.sh
