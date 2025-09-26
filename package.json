@@ -10,7 +10,7 @@
     "build": "npm run download && npm run build-libraw && node-gyp rebuild",
     "rebuild": "npm run clean && npm run build",
     "prebuildify": "prebuildify --napi",
-    "prebuildify:all": "prebuildify --napi --target 18.0.0 --target 20.0.0 --target 22.0.0 --platforms darwin,linux,win32 --archs x64,arm64",
+    "prebuildify:all": "prebuildify --napi --target 18.0.0 --target 20.0.0 --target 22.0.0",
     "build:all": "npm run prebuildify:all",
     "test": "node test/index.js",
     "test:quick": "node test/index.js quick",
