@@ -59,6 +59,17 @@ jobs:
           elif [ "$RUNNER_OS" = "macOS" ]; then
             # macOS: 安装 autotools 和 pkg-config
             brew install autoconf automake libtool pkg-config
+            # 确保 pkg-config 在 PATH 中
+            export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+            # 验证安装
+            which pkg-config || echo "pkg-config not found in PATH"
+            pkg-config --version || echo "pkg-config version check failed"
+            # 如果还是找不到，尝试直接使用完整路径
+            if ! command -v pkg-config &> /dev/null; then
+              echo "pkg-config not found, trying alternative locations..."
+              find /opt/homebrew -name "pkg-config" 2>/dev/null || echo "pkg-config not found in /opt/homebrew"
+              find /usr/local -name "pkg-config" 2>/dev/null || echo "pkg-config not found in /usr/local"
+            fi
           else
             # Linux: 安装 autotools 和 pkg-config
             sudo apt-get update
@@ -97,18 +108,36 @@ jobs:
           cd ../../LibRaw-Source/LibRaw-0.21.4
           # 生成 configure 脚本 (官方文档要求)
           autoreconf --install
+          # 确保 pkg-config 可用
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+            # 如果还是找不到 pkg-config，尝试直接使用完整路径
+            if ! command -v pkg-config &> /dev/null; then
+              PKG_CONFIG_PATH_FULL=$(find /opt/homebrew -name "pkg-config" 2>/dev/null | head -1)
+              if [ -n "$PKG_CONFIG_PATH_FULL" ]; then
+                export PATH="$(dirname $PKG_CONFIG_PATH_FULL):$PATH"
+                echo "Using pkg-config from: $PKG_CONFIG_PATH_FULL"
+              fi
+            fi
+          fi
           # 完全禁用系统 lcms2，强制使用我们构建的版本
           export PKG_CONFIG_PATH="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib/pkgconfig"
-          export CPPFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include"
-          export LDFLAGS="-L$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib"
+          export CPPFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include $CPPFLAGS"
+          export LDFLAGS="-L$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib $LDFLAGS"
           export LCMS2_CFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include"
           export LCMS2_LIBS="-L$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib -lcms2"
+          # 确保 lcms2 头文件能被找到
+          export CFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include $CFLAGS"
+          export CXXFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include $CXXFLAGS"
           # 移除系统路径，避免找到系统 lcms2
           export PATH="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/bin:$(echo $PATH | sed 's|/opt/homebrew/bin:||g' | sed 's|/usr/local/bin:||g')"
+          # 验证 pkg-config 可用
+          which pkg-config || echo "pkg-config not found"
+          pkg-config --version || echo "pkg-config version check failed"
           # 验证 pkg-config 能找到我们的 lcms2
           pkg-config --exists lcms2 || echo "Warning: lcms2 not found by pkg-config"
           pkg-config --cflags --libs lcms2 || echo "Warning: lcms2 pkg-config failed"
-          ./configure --enable-static --disable-shared --disable-openmp --disable-examples --prefix="$(pwd)/build/${PLATFORM}-${ARCH}" --with-lcms2="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}"
+          ./configure --enable-static --disable-shared --disable-openmp --disable-examples --prefix="$(pwd)/build/${PLATFORM}-${ARCH}" --with-lcms2="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}" --with-lcms2-include="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include" --with-lcms2-lib="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib"
           make -j${JOBS}
           make install
 
