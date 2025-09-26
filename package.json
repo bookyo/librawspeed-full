@@ -17,6 +17,13 @@
     "cross-compile:summary": "node scripts/verify-cross-compile.js --summary",
     "check:env": "node scripts/check-environment.js",
     "rebuild": "npm run clean && npm run build",
+    "prebuildify": "prebuildify --napi",
+    "prebuildify:all": "prebuildify --napi --all",
+    "prebuildify:windows": "prebuildify --napi --platform win32 --arch x64",
+    "prebuildify:darwin": "prebuildify --napi --platform darwin --arch x64",
+    "prebuildify:darwin-arm64": "prebuildify --napi --platform darwin --arch arm64",
+    "prebuildify:linux": "prebuildify --napi --platform linux --arch x64",
+    "prebuildify:linux-arm64": "prebuildify --napi --platform linux --arch arm64",
     "test": "node test/index.js",
     "test:all": "node test/index.js full",
     "test:quick": "node test/index.js quick",
@@ -38,7 +45,7 @@
     "test:samples": "node test/test-samples.js",
     "test:compare": "node test/compare-samples.js",
     "prepublishOnly": "npm run test",
-    "install": "node-gyp rebuild",
+    "install": "node-gyp-build",
     "clean": "node-gyp clean",
     "setup:github": "node scripts/github-setup.js",
     "docs:generate": "node scripts/generate-docs.js",
@@ -52,11 +59,13 @@
   "dependencies": {
     "chroma-js": "^3.1.2",
     "exiftool-vendored": "^30.5.0",
-    "node-addon-api": "^7.1.1"
+    "node-addon-api": "^7.1.1",
+    "node-gyp-build": "^4.8.0"
   },
   "devDependencies": {
     "bumpp": "^10.2.3",
     "node-gyp": "^10.0.0",
+    "prebuildify": "^6.0.1",
     "sharp": "^0.33.5"
   },
   "peerDependencies": {

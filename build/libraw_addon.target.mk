@@ -25,7 +25,7 @@ CFLAGS_Debug := \
 	-O0 \
 	-gdwarf-2 \
 	-fno-strict-aliasing \
-	-mmacosx-version-min=11.0 \
+	-mmacosx-version-min=13.5 \
 	-arch \
 	arm64 \
 	-Wall \
@@ -38,7 +38,7 @@ CFLAGS_C_Debug :=
 
 # Flags passed to only C++ files.
 CFLAGS_CC_Debug := \
-	-std=gnu++17 \
+	-std=gnu++20 \
 	-stdlib=libc++ \
 	-fno-rtti \
 	-fno-exceptions
@@ -50,13 +50,13 @@ CFLAGS_OBJC_Debug :=
 CFLAGS_OBJCC_Debug :=
 
 INCS_Debug := \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/include/node \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/src \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/openssl/config \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/openssl/openssl/include \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/uv/include \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/zlib \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/v8/include \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/include/node \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/src \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/openssl/config \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/openssl/openssl/include \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/uv/include \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/zlib \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/v8/include \
 	-I/Users/fuguoqiang/Documents/workspace/infra/librawspeed/node_modules/node-addon-api \
 	-I$(srcdir)/deps/LibRaw-Source/LibRaw-0.21.4/include \
 	-I$(srcdir)/deps/LibRaw-Source/LibRaw-0.21.4/libraw \
@@ -88,7 +88,7 @@ CFLAGS_Release := \
 	-O3 \
 	-gdwarf-2 \
 	-fno-strict-aliasing \
-	-mmacosx-version-min=11.0 \
+	-mmacosx-version-min=13.5 \
 	-arch \
 	arm64 \
 	-Wall \
@@ -101,7 +101,7 @@ CFLAGS_C_Release :=
 
 # Flags passed to only C++ files.
 CFLAGS_CC_Release := \
-	-std=gnu++17 \
+	-std=gnu++20 \
 	-stdlib=libc++ \
 	-fno-rtti \
 	-fno-exceptions
@@ -113,13 +113,13 @@ CFLAGS_OBJC_Release :=
 CFLAGS_OBJCC_Release :=
 
 INCS_Release := \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/include/node \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/src \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/openssl/config \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/openssl/openssl/include \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/uv/include \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/zlib \
-	-I/Users/fuguoqiang/Library/Caches/node-gyp/22.16.0/deps/v8/include \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/include/node \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/src \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/openssl/config \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/openssl/openssl/include \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/uv/include \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/zlib \
+	-I/var/folders/6y/78gsp8sd1z5_8vk02ytxzd000000gn/T/prebuildify/node/24.0.0/deps/v8/include \
 	-I/Users/fuguoqiang/Documents/workspace/infra/librawspeed/node_modules/node-addon-api \
 	-I$(srcdir)/deps/LibRaw-Source/LibRaw-0.21.4/include \
 	-I$(srcdir)/deps/LibRaw-Source/LibRaw-0.21.4/libraw \
@@ -163,7 +163,7 @@ $(obj).$(TOOLSET)/$(TARGET)/%.o: $(obj)/%.cpp FORCE_DO_CMD
 LDFLAGS_Debug := \
 	-undefined dynamic_lookup \
 	-Wl,-search_paths_first \
-	-mmacosx-version-min=11.0 \
+	-mmacosx-version-min=13.5 \
 	-arch \
 	arm64 \
 	-L$(builddir) \
@@ -176,7 +176,7 @@ LIBTOOLFLAGS_Debug := \
 LDFLAGS_Release := \
 	-undefined dynamic_lookup \
 	-Wl,-search_paths_first \
-	-mmacosx-version-min=11.0 \
+	-mmacosx-version-min=13.5 \
 	-arch \
 	arm64 \
 	-L$(builddir) \

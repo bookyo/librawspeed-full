@@ -1,0 +1,165 @@
+name: Build and Publish Platform Packages
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-platforms:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Windows
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            package-name: librawspeed-win32-x64
+
+          # macOS Intel
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+            package-name: librawspeed-darwin-x64
+
+          # macOS ARM64
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            package-name: librawspeed-darwin-arm64
+
+          # Linux x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            package-name: librawspeed-linux-x64
+
+          # Linux ARM64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            package-name: librawspeed-linux-arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build LibRaw dependencies
+        run: node scripts/build-libraw.js
+
+      - name: Build prebuildify
+        run: |
+          node scripts/build-prebuildify.js ${{ matrix.platform }} ${{ matrix.arch }}
+        env:
+          npm_config_arch: ${{ matrix.arch }}
+          npm_config_platform: ${{ matrix.platform }}
+
+      - name: Create platform package
+        run: |
+          node scripts/publish-platforms.js
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          ARCH: ${{ matrix.arch }}
+          PACKAGE_NAME: ${{ matrix.package-name }}
+
+      - name: Upload platform package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package-name }}
+          path: prebuilds/${{ matrix.package-name }}/
+          retention-days: 30
+
+  publish-platforms:
+    runs-on: ubuntu-latest
+    needs: build-platforms
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Download all platform packages
+        uses: actions/download-artifact@v4
+        with:
+          path: prebuilds/
+
+      - name: Publish platform packages
+        run: |
+          for dir in prebuilds/*/; do
+            if [ -d "$dir" ]; then
+              echo "Publishing $(basename "$dir")..."
+              cd "$dir"
+              npm publish --access public
+              cd ../..
+            fi
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  test-platforms:
+    runs-on: ${{ matrix.os }}
+    needs: build-platforms
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win32
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download platform package
+        uses: actions/download-artifact@v4
+        with:
+          name: librawspeed-${{ matrix.platform }}-${{ matrix.arch }}
+          path: prebuilds/
+
+      - name: Test platform package
+        run: |
+          # 安装平台包
+          cd prebuilds/librawspeed-${{ matrix.platform }}-${{ matrix.arch }}
+          npm install
+
+          # 测试主包
+          cd ../..
+          npm test
