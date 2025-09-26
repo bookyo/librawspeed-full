@@ -28,6 +28,14 @@ if [ "$PLATFORM" = "darwin" ]; then
   else
     ARCH="x64"
   fi
+  
+  # 修复 macOS 上的 libtool 路径问题
+  if command -v brew >/dev/null 2>&1; then
+    if [ -d "/opt/homebrew/opt/libtool/libexec/gnubin" ]; then
+      export PATH="/opt/homebrew/opt/libtool/libexec/gnubin:$PATH"
+      echo "🔧 修复 libtool 路径: $(which libtool)"
+    fi
+  fi
 elif [ "$PLATFORM" = "linux" ]; then
   PLATFORM="linux"
   ARCH=$(uname -m)
