@@ -53,6 +53,7 @@ jobs:
 
       - name: Setup Windows Build Environment
         if: runner.os == 'Windows'
+        shell: cmd
         run: |
           echo "Setting up native Windows build environment..."
 
@@ -64,16 +65,16 @@ jobs:
 
           # 验证预装工具
           echo "Checking pre-installed tools..."
-          where cl 2>$null && echo "✅ MSVC compiler found" || echo "❌ MSVC not found"
-          where cmake 2>$null && echo "✅ CMake found" || echo "❌ CMake not found"
-          where git 2>$null && echo "✅ Git found" || echo "❌ Git not found"
+          where cl 2>nul && echo "✅ MSVC compiler found" || echo "❌ MSVC not found"
+          where cmake 2>nul && echo "✅ CMake found" || echo "❌ CMake not found"
+          where git 2>nul && echo "✅ Git found" || echo "❌ Git not found"
 
           # 设置 MSVC 环境变量
           echo "Setting up MSVC environment..."
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" 2>nul || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Auxiliary\Build\vcvars64.bat" 2>nul || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" 2>nul || echo "MSVC environment setup failed"
 
           # 验证编译器
-          cl 2>$null && echo "✅ MSVC compiler ready" || echo "❌ MSVC compiler not ready"
+          cl 2>nul && echo "✅ MSVC compiler ready" || echo "❌ MSVC compiler not ready"
 
       - name: Install build tools (macOS/Linux)
         if: runner.os != 'Windows'
@@ -155,6 +156,7 @@ jobs:
 
       - name: Build LibRaw (Windows - MSVC)
         if: runner.os == 'Windows'
+        shell: cmd
         run: |
           echo "Building LibRaw for Windows using native MSVC compiler..."
 
