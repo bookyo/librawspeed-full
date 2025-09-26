@@ -48,34 +48,24 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Install build tools
+      - name: Setup MSYS2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            make
+            pkg-config
+            autoconf
+            automake
+            libtool
+
+      - name: Install build tools (macOS/Linux)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            # Windows: 使用更稳定的方法
-            echo "Installing Windows build tools..."
-            # 尝试安装 MSYS2，如果失败则跳过 Windows 构建
-            choco install msys2 --timeout 2400 --retry-count 2 -y || {
-              echo "MSYS2 installation failed, skipping Windows build"
-              echo "SKIP_WINDOWS_BUILD=true" >> $GITHUB_ENV
-              exit 0
-            }
-            # 等待安装完成
-            sleep 20
-            # 检查 MSYS2 是否安装成功
-            if [ -d "/c/tools/msys64" ]; then
-              echo "MSYS2 installed successfully"
-              # 设置 PATH
-              export PATH="/c/tools/msys64/usr/bin:$PATH"
-              # 更新包数据库（设置超时）
-              timeout 600 /c/tools/msys64/usr/bin/pacman -Sy --noconfirm || echo "Package update timeout, continuing..."
-              # 安装基本工具
-              timeout 600 /c/tools/msys64/usr/bin/pacman -S --noconfirm make pkg-config || echo "Tool installation timeout, continuing..."
-            else
-              echo "MSYS2 installation failed, skipping Windows build"
-              echo "SKIP_WINDOWS_BUILD=true" >> $GITHUB_ENV
-            fi
-          elif [ "$RUNNER_OS" = "macOS" ]; then
+          if [ "$RUNNER_OS" = "macOS" ]; then
             # macOS: 安装 autotools 和 pkg-config
             brew install autoconf automake libtool pkg-config
             # 确保 pkg-config 在 PATH 中
@@ -100,25 +90,13 @@ jobs:
           bash scripts/download-dependencies.sh
 
       - name: Build LibRaw (no lcms2)
-        shell: bash
+        shell: msys2 {0}
         run: |
-          # 检查是否跳过 Windows 构建
-          if [ "$SKIP_WINDOWS_BUILD" = "true" ] && [ "$RUNNER_OS" = "Windows" ]; then
-            echo "Skipping Windows build due to MSYS2 installation failure"
-            exit 0
-          fi
-
           # 设置平台和架构变量
           if [ "$RUNNER_OS" = "Windows" ]; then
             PLATFORM="windows"
             ARCH="x64"
             JOBS=4
-            # 设置 Windows 环境 PATH
-            export PATH="/c/tools/msys64/usr/bin:$PATH"
-            # 验证工具可用性
-            echo "Checking Windows build environment..."
-            which make || echo "make not found"
-            which pkg-config || echo "pkg-config not found"
           elif [ "$RUNNER_OS" = "macOS" ]; then
             PLATFORM="darwin"
             ARCH="arm64"
@@ -135,18 +113,7 @@ jobs:
           # 检查 configure 脚本是否存在
           if [ ! -f "./configure" ]; then
             echo "Generating configure script..."
-            if [ "$RUNNER_OS" = "Windows" ]; then
-              # Windows: 尝试使用 autoreconf，如果失败则使用预生成的脚本
-              /c/tools/msys64/usr/bin/autoreconf --install || {
-                echo "autoreconf failed, checking for pre-generated configure..."
-                if [ ! -f "./configure" ]; then
-                  echo "No configure script available, build failed"
-                  exit 1
-                fi
-              }
-            else
-              autoreconf --install
-            fi
+            autoreconf --install
           else
             echo "Using pre-generated configure script"
           fi
@@ -163,18 +130,12 @@ jobs:
         run: npm ci
 
       - name: Build prebuildify
-        run: |
-          if [ "$SKIP_WINDOWS_BUILD" = "true" ] && [ "$RUNNER_OS" = "Windows" ]; then
-            echo "Skipping prebuildify for Windows due to MSYS2 installation failure"
-            exit 0
-          fi
-          npm run prebuildify
+        run: npm run prebuildify
         env:
           npm_config_arch: ${{ matrix.arch }}
           npm_config_platform: ${{ matrix.platform }}
 
       - name: Upload prebuilds
-        if: env.SKIP_WINDOWS_BUILD != 'true' || runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: prebuilds-${{ matrix.platform }}-${{ matrix.arch }}
