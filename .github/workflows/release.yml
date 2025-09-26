@@ -167,11 +167,6 @@ jobs:
           path: prebuilds/
           retention-days: 30
 
-  collect-prebuilds:
-    runs-on: ubuntu-latest
-    needs: build-prebuilds
-    if: false
-
   release:
     runs-on: ubuntu-latest
     needs: build-prebuilds
