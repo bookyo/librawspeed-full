@@ -29,7 +29,10 @@
           "msvs_settings": {
             "VCCLCompilerTool": {
               "ExceptionHandling": 1,
-              "RuntimeLibrary": 3
+              "RuntimeLibrary": 2,
+              "AdditionalOptions": [
+                "/MD"
+              ]
             }
           }
         }],
