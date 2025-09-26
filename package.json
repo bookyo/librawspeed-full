@@ -6,7 +6,8 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "download": "bash scripts/download-dependencies.sh",
-    "build": "npm run download && node-gyp rebuild",
+    "build-libraw": "bash scripts/build-libraw.sh",
+    "build": "npm run download && npm run build-libraw && node-gyp rebuild",
     "rebuild": "npm run clean && npm run build",
     "prebuildify": "prebuildify --napi",
     "prebuildify:all": "prebuildify --napi --all",

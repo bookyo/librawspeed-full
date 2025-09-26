@@ -102,6 +102,9 @@ jobs:
           cd deps/LibRaw-Source/LibRaw-0.21.4
           # 生成 configure 脚本
           autoreconf --install
+          # 设置编译选项，确保使用 -fPIC
+          export CFLAGS="-fPIC"
+          export CXXFLAGS="-fPIC"
           # 简单构建，禁用所有可选依赖
           ./configure --enable-static --disable-shared --disable-openmp --disable-examples --disable-lcms --disable-jasper --disable-jpeg --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
           make -j${JOBS}

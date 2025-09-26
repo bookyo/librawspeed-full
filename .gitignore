@@ -37,6 +37,9 @@ build/Debug/
 node_modules/
 jspm_packages/
 
+# Autotools cache directories
+**/autom4te.cache/
+
 # TypeScript v1 declaration files
 typings/
 

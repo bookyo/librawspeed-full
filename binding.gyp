@@ -41,6 +41,8 @@
         }],
         ["OS=='linux'", {
           "cflags": ["-fPIC"],
+          "cxxflags": ["-fPIC"],
+          "ldflags": ["-fPIC"],
           "libraries": [
             "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/'+m+'-'+a+'/lib/libraw.a'));\")"
           ]
