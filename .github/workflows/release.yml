@@ -109,7 +109,27 @@ jobs:
         shell: bash
         run: bash scripts/download-dependencies.sh
 
-      - name: Build LibRaw
+      - name: Build LibRaw (Windows)
+        if: matrix.platform == 'win32'
+        shell: cmd
+        run: |
+          echo Starting LibRaw MSVC build
+          cd deps\LibRaw-Source\LibRaw-0.21.4
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
+          where cl
+          where nmake
+          nmake /nologo /f Makefile.msvc clean
+          nmake /nologo /f Makefile.msvc lib\libraw_static.lib
+          if not exist lib\libraw_static.lib (
+            echo libraw_static.lib not found
+            exit /b 2
+          )
+          mkdir build\windows-x64\lib
+          copy /y lib\libraw_static.lib build\windows-x64\lib\
+          dir build\windows-x64\lib
+
+      - name: Build LibRaw (non-Windows)
+        if: matrix.platform != 'win32'
         shell: bash
         run: |
           echo "🚀 开始构建 LibRaw..."
@@ -120,15 +140,7 @@ jobs:
           echo "✅ LibRaw 构建完成"
           echo "⏰ 构建结束时间: $(date)"
           echo "📁 检查构建结果..."
-          if [ "${{ matrix.platform }}" = "win32" ]; then
-            echo "🪟 Windows 构建调试信息:"
-            echo "  检查 LibRaw 源码目录:"
-            ls -la deps/LibRaw-Source/LibRaw-*/
-            echo "  检查构建目录结构:"
-            find deps/LibRaw-Source/LibRaw-*/build -type f -name "*.lib" -o -name "*.a" -o -name "*.dll" | head -20
-          else
-            ls -la deps/LibRaw-Source/LibRaw-*/build/*/
-          fi
+          ls -la deps/LibRaw-Source/LibRaw-*/build/*/
 
       - name: Generate prebuild for current platform
         run: npm run prebuildify
