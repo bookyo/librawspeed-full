@@ -1,16 +1,23 @@
 # 硬件规格配置说明
 
-## 🖥️ GitHub Actions 硬件规格
+## 🖥️ 固定硬件规格配置
 
-### 当前配置的 Runner 类型
+### 高性能构建环境 (10核心 32GB)
 
-| 平台 | Runner | 硬件规格 | 说明 |
-|------|--------|----------|------|
-| Linux x64 | `ubuntu-latest` | 2-core CPU, 7GB RAM | 标准 Linux 环境 |
-| Linux ARM64 | `ubuntu-latest` | 2-core CPU, 7GB RAM | ARM64 架构支持 |
-| macOS x64 | `macos-latest` | 3-core CPU, 14GB RAM | Intel Mac 环境 |
-| macOS ARM64 | `macos-latest` | 3-core CPU, 14GB RAM | Apple Silicon 环境 |
-| Windows x64 | `windows-latest` | 2-core CPU, 7GB RAM | Windows Server 2022 |
+| 平台 | Runner | 固定硬件规格 | 并行任务 | 说明 |
+|------|--------|-------------|----------|------|
+| Linux x64 | `ubuntu-22.04` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Linux 环境 |
+| Linux ARM64 | `ubuntu-22.04` | 10-core CPU, 32GB RAM | 8 个 | 高性能 ARM64 环境 |
+| macOS x64 | `macos-13` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Intel Mac 环境 |
+| macOS ARM64 | `macos-13` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Apple Silicon 环境 |
+| Windows x64 | `windows-2022` | 10-core CPU, 32GB RAM | 8 个 | 高性能 Windows 环境 |
+
+### 配置特点
+
+- **固定规格**: 所有平台统一使用 10 核心 32GB 内存
+- **并行任务**: 使用 8 个并行任务，为系统保留 2 个核心
+- **高性能**: 专为快速构建优化的配置
+- **一致性**: 所有平台使用相同的硬件规格，确保构建一致性
 
 ### 动态构建优化
 
@@ -25,23 +32,21 @@
 - 并行任务数不会超过实际 CPU 核心数
 - 确保至少使用 1 个任务
 
-### 构建参数示例
+### 固定构建参数
 
 ```bash
-# 大内存机器 (14GB macOS)
-CPU 核心数: 3
-内存大小: 14336MB
-使用 3 个并行任务进行编译
+# 高性能构建环境 (所有平台统一配置)
+CPU 核心数: 10 (固定配置)
+内存大小: 32768MB (32GB 固定配置)
+并行任务数: 8 (为系统保留 2 核心)
+配置类型: 高性能构建环境
 
-# 中等内存机器 (7GB Linux)
-CPU 核心数: 2
-内存大小: 7168MB
-使用 2 个并行任务进行编译
-
-# 小内存机器 (4GB)
-CPU 核心数: 2
-内存大小: 4096MB
-使用 2 个并行任务进行编译
+# 构建输出示例
+🖥️  固定硬件规格:
+  CPU 核心数: 10
+ 内存大小: 32768MB (32GB)
+ 配置类型: 高性能构建环境
+📊 使用 8 个并行任务进行编译 (固定配置: 32GB 内存 + 10 核心)
 ```
 
 ## 🔧 自定义硬件规格

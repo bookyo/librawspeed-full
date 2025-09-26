@@ -15,27 +15,37 @@ jobs:
             platform: linux
             arch: x64
             runner: ubuntu-latest
-            runner-type: ubuntu-20.04
+            runner-type: ubuntu-22.04
+            cores: 10
+            memory: 32
           - os: ubuntu-latest
             platform: linux
             arch: arm64
             runner: ubuntu-latest
-            runner-type: ubuntu-20.04
+            runner-type: ubuntu-22.04
+            cores: 10
+            memory: 32
           - os: macos-latest
             platform: darwin
             arch: x64
             runner: macos-latest
-            runner-type: macos-12
+            runner-type: macos-13
+            cores: 10
+            memory: 32
           - os: macos-latest
             platform: darwin
             arch: arm64
             runner: macos-latest
-            runner-type: macos-12
+            runner-type: macos-13
+            cores: 10
+            memory: 32
           - os: windows-latest
             platform: win32
             arch: x64
             runner: windows-latest
             runner-type: windows-2022
+            cores: 10
+            memory: 32
 
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
@@ -55,13 +65,20 @@ jobs:
 
       - name: Display hardware specifications
         run: |
-          echo "🖥️  硬件规格信息:"
+          echo "🖥️  固定硬件规格配置:"
           echo "=================="
           echo "操作系统: $(uname -s)"
           echo "架构: $(uname -m)"
           echo "内核版本: $(uname -r)"
-          echo "CPU 核心数: $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 'N/A')"
-          echo "内存信息:"
+          echo "配置类型: 高性能构建环境"
+          echo "CPU 核心数: ${{ matrix.cores }} (固定配置)"
+          echo "内存大小: ${{ matrix.memory }}GB (固定配置)"
+          echo "并行任务数: 8 (为系统保留 2 核心)"
+          echo "Runner 类型: ${{ matrix.runner-type }}"
+          echo "=================="
+          echo "实际系统信息:"
+          echo "检测到的 CPU 核心: $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 'N/A')"
+          echo "检测到的内存:"
           if command -v free >/dev/null 2>&1; then
             free -h
           elif command -v vm_stat >/dev/null 2>&1; then
