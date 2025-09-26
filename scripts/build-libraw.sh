@@ -206,8 +206,8 @@ if [ "$PLATFORM" = "windows" ]; then
   # 动态查找并复制 .lib 文件
   LIB_FILE=$(find . -name "libraw_static.lib" -o -name "libraw.lib" | head -n 1)
   if [ -n "$LIB_FILE" ]; then
-    cp "$LIB_FILE" "build/${PLATFORM}-${ARCH}/"
-    echo "   复制 $LIB_FILE 到 build/${PLATFORM}-${ARCH}/"
+    cp "$LIB_FILE" "build/${PLATFORM}-${ARCH}/lib/"
+    echo "   复制 $LIB_FILE 到 build/${PLATFORM}-${ARCH}/lib/"
   else
     echo "❌ 未找到 libraw_static.lib 或 libraw.lib 文件"
     exit 1
