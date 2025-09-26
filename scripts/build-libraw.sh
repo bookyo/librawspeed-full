@@ -85,13 +85,39 @@ fi
 
 # 构建
 echo "🔨 编译 LibRaw..."
-# 使用较少的并行任务以避免资源限制
-JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
-# 限制最大并行任务数
-if [ "$JOBS" -gt 4 ]; then
-  JOBS=4
+
+# 获取硬件信息并动态调整构建参数
+TOTAL_CORES=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+
+# 根据平台获取内存信息
+if [ "$PLATFORM" = "darwin" ]; then
+  # macOS 内存检测
+  TOTAL_MEMORY=$(sysctl -n hw.memsize 2>/dev/null | awk '{print int($1/1024/1024)}' || echo 4096)
+else
+  # Linux 内存检测
+  TOTAL_MEMORY=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || echo 4096)
 fi
-echo "📊 使用 $JOBS 个并行任务进行编译..."
+
+echo "🖥️  硬件信息:"
+echo "  CPU 核心数: $TOTAL_CORES"
+echo "  内存大小: ${TOTAL_MEMORY}MB"
+
+# 根据硬件规格动态调整并行任务数
+if [ "$TOTAL_MEMORY" -gt 8192 ]; then
+  # 大内存机器，可以使用更多并行任务
+  MAX_JOBS=$((TOTAL_CORES > 8 ? 8 : TOTAL_CORES))
+elif [ "$TOTAL_MEMORY" -gt 4096 ]; then
+  # 中等内存机器
+  MAX_JOBS=$((TOTAL_CORES > 6 ? 6 : TOTAL_CORES))
+else
+  # 小内存机器，保守设置
+  MAX_JOBS=$((TOTAL_CORES > 4 ? 4 : TOTAL_CORES))
+fi
+
+# 确保至少使用 1 个任务
+JOBS=$((MAX_JOBS > 0 ? MAX_JOBS : 1))
+
+echo "📊 使用 $JOBS 个并行任务进行编译 (基于 ${TOTAL_MEMORY}MB 内存和 $TOTAL_CORES 核心)"
 
 # 添加构建状态监控
 echo "⏰ 开始时间: $(date)"
