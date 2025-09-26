@@ -17,7 +17,7 @@ jobs:
             platform: darwin
             arch: arm64
             runner: macos-latest
-            runner-type: macos-13
+            runner-type: macos-14
             cores: 10
             memory: 32
           - os: windows-latest
@@ -81,25 +81,17 @@ jobs:
         if: matrix.platform == 'darwin'
         run: |
           echo "🍎 安装 macOS 构建工具..."
-          # 安装 Xcode Command Line Tools
-          xcode-select --install || true
-
-          # 安装 Homebrew 依赖
           brew install autoconf automake libtool pkg-config
-
-          # 修复 libtool 路径问题
-          echo "export PATH=\"/opt/homebrew/opt/libtool/libexec/gnubin:\$PATH\"" >> $GITHUB_ENV
-
-          # 检查构建工具
+          echo "export PATH=\"/opt/homebrew/opt/libtool/bin:$PATH\"" >> $GITHUB_ENV
           echo "🔍 检查构建工具状态:"
-          echo "  autoconf: $(which autoconf || echo 'not found')"
-          echo "  automake: $(which automake || echo 'not found')"
-          echo "  libtool: $(which libtool || echo 'not found')"
-          echo "  pkg-config: $(which pkg-config || echo 'not found')"
+          which autoconf automake libtool pkg-config
 
       - name: Install build tools (Windows)
         if: matrix.platform == 'win32'
         run: |
+          echo "🪟 验证 Windows 构建环境..."
+          (where cl && where nmake && where cmake) || (echo "错误：未找到关键构建工具 (cl, nmake, cmake)。" && exit 1)
+          echo "✅ 所有构建工具均已找到。"
           echo "Using pre-installed MSVC tools"
           echo "检查 MSVC 环境:"
           where cl
@@ -161,33 +153,16 @@ jobs:
       - name: Merge prebuilds
         run: |
           echo "🔗 合并所有平台的预构建文件..."
-
-          # 创建统一的 prebuilds 目录
-          mkdir -p prebuilds-unified
-
-          # 合并所有平台的预构建文件
-          for dir in prebuilds-*/prebuilds/*; do
-            if [ -d "$dir" ]; then
-              platform_arch=$(basename "$dir")
-              echo "📁 处理平台: $platform_arch"
-              cp -r "$dir" "prebuilds-unified/"
-            fi
-          done
-
-          # 显示最终结构
+          mkdir -p prebuilds/all-platforms
+          find prebuilds -mindepth 2 -name "*.node" -exec cp -v {} prebuilds/all-platforms/ \;
           echo "📊 最终预构建文件结构:"
-          find prebuilds-unified -name "*.node" -type f | sort
-
-          # 统计信息
-          echo "📈 统计信息:"
-          echo "总文件数: $(find prebuilds-unified -name "*.node" -type f | wc -l)"
-          echo "总大小: $(du -sh prebuilds-unified/ | cut -f1)"
+          ls -R prebuilds/all-platforms
 
       - name: Upload unified prebuilds
         uses: actions/upload-artifact@v4
         with:
           name: prebuilds-all-platforms
-          path: prebuilds-unified/
+          path: prebuilds/all-platforms/
           retention-days: 30
 
   release:
@@ -209,7 +184,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: prebuilds-all-platforms
-          path: prebuilds/
+          path: prebuilds/all-platforms/
 
       - name: Install dependencies
         run: npm ci
