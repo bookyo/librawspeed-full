@@ -17,7 +17,7 @@
       "conditions": [
         ["OS=='win'", {
           "libraries": [
-            "<!(node -e \"const p=require('path');const fs=require('fs');const basePath='deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64';const possiblePaths=[p.resolve(basePath,'lib/libraw_static.lib'),p.resolve(basePath,'lib/libraw.lib'),p.resolve(basePath,'libraw_static.lib'),p.resolve(basePath,'libraw.lib')];let foundPath=null;for(const path of possiblePaths){if(fs.existsSync(path)){foundPath=path;break;}}if(foundPath){process.stdout.write(foundPath);}else{console.error('LibRaw library not found. Searched paths:',possiblePaths);process.exit(1);}\")"
+            "<(module_root_dir)/deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw_static.lib"
           ],
           "msvs_settings": {
             "VCCLCompilerTool": {
