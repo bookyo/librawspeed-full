@@ -66,32 +66,34 @@ jobs:
 
       - name: Setup MSYS2 (Windows) - Additional Tools
         if: runner.os == 'Windows' && steps['Setup MSYS2 (Windows) - Minimal'].outcome == 'success'
+        shell: cmd
         run: |
           echo "Installing additional MSYS2 tools..."
-
+          
           # 根据 MSYS2 文档，使用 pacman 的最佳实践
           # 先同步包数据库
-          msys2 -c 'pacman --noconfirm -Sy' || echo "Package sync failed, continuing..."
-
+          msys2 -c "pacman --noconfirm -Sy" || echo "Package sync failed, continuing..."
+          
           # 安装构建工具，使用 mingw-w64-ucrt-x86_64- 前缀
-          msys2 -c 'pacman --noconfirm -S mingw-w64-ucrt-x86_64-pkg-config mingw-w64-ucrt-x86_64-autoconf mingw-w64-ucrt-x86_64-automake mingw-w64-ucrt-x86_64-libtool' || echo "Some tools installation failed, continuing..."
-
+          msys2 -c "pacman --noconfirm -S mingw-w64-ucrt-x86_64-pkg-config mingw-w64-ucrt-x86_64-autoconf mingw-w64-ucrt-x86_64-automake mingw-w64-ucrt-x86_64-libtool" || echo "Some tools installation failed, continuing..."
+          
           echo "Additional tools installation completed"
 
       - name: Initialize MSYS2 (if needed)
         if: runner.os == 'Windows'
+        shell: cmd
         run: |
           echo "Initializing MSYS2 environment..."
-
+          
           # 根据 MSYS2 文档，使用更稳定的初始化方法
           # 设置环境变量以避免交互式提示
           set MSYS2_PATH_TYPE=minimal
           set MSYS2_ENV_CONV_EXCL=*
-
+          
           # 等待 MSYS2 初始化完成，使用更短的超时时间
           echo "Testing MSYS2 availability..."
           for /L %%i in (1,1,10) do (
-            msys2 -c 'echo "MSYS2 test %%i"' >nul 2>&1 && (
+            msys2 -c "echo MSYS2 test %%i" >nul 2>&1 && (
               echo "✅ MSYS2 is ready after %%i attempts"
               goto :ready
             )
@@ -102,19 +104,21 @@ jobs:
 
       - name: Configure MSYS2 environment
         if: runner.os == 'Windows'
+        shell: cmd
         run: |
           echo "Configuring MSYS2 environment..."
-
+          
           # 检查已安装的包
-          msys2 -c 'pacman -Q | grep -E "(make|gcc|autoconf|automake|libtool|pkg-config)"' || echo "Some packages may not be installed"
-
+          msys2 -c "pacman -Q | grep -E '(make|gcc|autoconf|automake|libtool|pkg-config)'" || echo "Some packages may not be installed"
+          
           echo "MSYS2 environment configuration completed"
 
       - name: Verify MSYS2 installation
         if: runner.os == 'Windows'
+        shell: cmd
         run: |
           echo "Verifying MSYS2 installation..."
-          if msys2 -c 'echo "MSYS2 is working"' && msys2 -c 'gcc --version' && msys2 -c 'make --version'; then
+          if msys2 -c "echo MSYS2 is working" && msys2 -c "gcc --version" && msys2 -c "make --version"; then
             echo "✅ MSYS2 installation verified"
           else
             echo "❌ MSYS2 installation failed, but continuing with available tools"
