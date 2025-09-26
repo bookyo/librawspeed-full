@@ -16,7 +16,11 @@
     "prepublishOnly": "npm run test",
     "install": "node-gyp-build",
     "clean": "node-gyp clean",
-    "docs:generate": "node scripts/generate-docs.js"
+    "docs:generate": "node scripts/generate-docs.js",
+    "release": "bumpp && git push --follow-tags",
+    "release:patch": "bumpp patch && git push --follow-tags",
+    "release:minor": "bumpp minor && git push --follow-tags",
+    "release:major": "bumpp major && git push --follow-tags"
   },
   "dependencies": {
     "chroma-js": "^3.1.2",
