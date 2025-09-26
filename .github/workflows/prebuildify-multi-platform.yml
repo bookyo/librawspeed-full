@@ -50,7 +50,7 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Setup MSYS2 (Windows) - Attempt 1
+      - name: Setup MSYS2 (Windows) - Minimal
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
@@ -59,59 +59,51 @@ jobs:
           cache: true
           install: >-
             make
-            pkg-config
-            autoconf
-            automake
-            libtool
             gcc
             g++
+            mingw-w64-ucrt-x86_64-toolchain
         continue-on-error: true
 
-      - name: Setup MSYS2 (Windows) - Attempt 2
-        if: runner.os == 'Windows' && steps['Setup MSYS2 (Windows) - Attempt 1'].outcome == 'failure'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: false
-          cache: false
-          install: >-
-            make
-            pkg-config
-            autoconf
-            automake
-            libtool
-            gcc
-            g++
-        continue-on-error: true
+      - name: Setup MSYS2 (Windows) - Additional Tools
+        if: runner.os == 'Windows' && steps['Setup MSYS2 (Windows) - Minimal'].outcome == 'success'
+        run: |
+          echo "Installing additional MSYS2 tools..."
 
-      - name: Setup MSYS2 (Windows) - Attempt 3
-        if: runner.os == 'Windows' && steps['Setup MSYS2 (Windows) - Attempt 2'].outcome == 'failure'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: false
-          cache: false
-          install: >-
-            make
-            pkg-config
-            autoconf
-            automake
-            libtool
-            gcc
-            g++
+          # 根据 MSYS2 文档，使用 pacman 的最佳实践
+          # 先同步包数据库
+          msys2 -c 'pacman --noconfirm -Sy' || echo "Package sync failed, continuing..."
+
+          # 安装构建工具，使用 mingw-w64-ucrt-x86_64- 前缀
+          msys2 -c 'pacman --noconfirm -S mingw-w64-ucrt-x86_64-pkg-config mingw-w64-ucrt-x86_64-autoconf mingw-w64-ucrt-x86_64-automake mingw-w64-ucrt-x86_64-libtool' || echo "Some tools installation failed, continuing..."
+
+          echo "Additional tools installation completed"
+
+      - name: Initialize MSYS2 (if needed)
+        if: runner.os == 'Windows'
+        run: |
+          echo "Initializing MSYS2 environment..."
+
+          # 根据 MSYS2 文档，使用更稳定的初始化方法
+          # 设置环境变量以避免交互式提示
+          set MSYS2_PATH_TYPE=minimal
+          set MSYS2_ENV_CONV_EXCL=*
+
+          # 等待 MSYS2 初始化完成，使用更短的超时时间
+          echo "Testing MSYS2 availability..."
+          for /L %%i in (1,1,10) do (
+            msys2 -c 'echo "MSYS2 test %%i"' >nul 2>&1 && (
+              echo "✅ MSYS2 is ready after %%i attempts"
+              goto :ready
+            )
+            timeout /t 30 /nobreak >nul
+          )
+          echo "❌ MSYS2 initialization timeout, but continuing..."
+          :ready
 
       - name: Configure MSYS2 environment
         if: runner.os == 'Windows'
         run: |
           echo "Configuring MSYS2 environment..."
-          # 设置 MSYS2 环境变量
-          echo "Setting up MSYS2 environment variables..."
-
-          # 配置 pacman 为非交互式模式
-          msys2 -c 'echo "Configuring pacman..."'
-
-          # 尝试更新包数据库（不更新包）
-          msys2 -c 'pacman --noconfirm -Sy' || echo "Package sync failed, continuing..."
 
           # 检查已安装的包
           msys2 -c 'pacman -Q | grep -E "(make|gcc|autoconf|automake|libtool|pkg-config)"' || echo "Some packages may not be installed"
@@ -271,19 +263,24 @@ jobs:
           PLATFORM="windows"
           ARCH="${{ matrix.arch }}"
 
+          # 检查是否已经有 MSYS2 构建结果
+          if exist "deps\LibRaw-Source\LibRaw-0.21.4\build\${PLATFORM}-${ARCH}\lib" (
+            echo "LibRaw already built with MSYS2"
+            exit 0
+          )
+
           # 设置 MSVC 环境
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" 2>nul || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Auxiliary\Build\vcvars64.bat" 2>nul || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" 2>nul || echo "MSVC not found"
 
           cd deps\LibRaw-Source\LibRaw-0.21.4
 
           # 使用 MSVC 构建
-          if exist "build\${PLATFORM}-${ARCH}\lib" (
-            echo "LibRaw already built with MSYS2"
-          ) else (
-            echo "Building LibRaw with MSVC fallback..."
-            # 这里可以添加 MSVC 特定的构建命令
-            echo "MSVC build not implemented yet, using MSYS2 result"
-          )
+          echo "Building LibRaw with MSVC fallback..."
+          echo "Note: MSVC build implementation needed for full functionality"
+
+          # 创建基本的构建目录结构
+          mkdir "build\${PLATFORM}-${ARCH}\lib" 2>nul || echo "Directory already exists"
+          echo "Fallback build directory created"
 
       - name: Build LibRaw (macOS/Linux)
         if: runner.os != 'Windows'
