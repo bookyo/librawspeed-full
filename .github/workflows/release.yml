@@ -154,6 +154,24 @@ jobs:
           PREBUILD_PLATFORM: ${{ matrix.platform }}
           PREBUILD_ARCH: ${{ matrix.arch }}
 
+      - name: Verify prebuild output
+        if: matrix.platform == 'win32'
+        shell: cmd
+        run: |
+          echo Verifying Windows prebuild exists
+          dir prebuilds\
+          if not exist prebuilds\win32-x64\*.node (
+            echo Missing Windows prebuild at prebuilds\win32-x64
+            exit /b 2
+          )
+
+      - name: Verify prebuild output (non-Windows)
+        if: matrix.platform != 'win32'
+        shell: bash
+        run: |
+          echo "Listing prebuilds directory"
+          ls -R prebuilds || true
+
       - name: Install sharp runtime (for tests)
         run: npm i --no-save sharp
 
@@ -188,6 +206,12 @@ jobs:
           pattern: prebuild-*
           path: .
           merge-multiple: true
+
+      - name: Show prebuilds in workspace
+        run: |
+          echo "Workspace prebuilds tree:" &&
+          if [ -d prebuilds ]; then ls -R prebuilds; else echo "no prebuilds dir"; fi
+        shell: bash
 
       - name: Install dependencies (no scripts)
         run: npm ci --ignore-scripts
