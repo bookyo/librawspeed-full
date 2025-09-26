@@ -166,7 +166,7 @@ MONITOR_PID=$!
 if [ "$PLATFORM" = "windows" ]; then
   # Windows 使用 nmake
   echo "🪟 使用 nmake 构建 LibRaw..."
-  if ! nmake -f Makefile.msvc; then
+  if ! nmake -f Makefile.msvc VERBOSE=1; then
     echo "❌ nmake 编译失败，请检查错误信息"
     kill $MONITOR_PID 2>/dev/null
     exit 1
