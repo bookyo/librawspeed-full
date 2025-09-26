@@ -87,26 +87,49 @@ fi
 # 构建
 echo "🔨 编译 LibRaw..."
 
-# 固定硬件规格配置 (10核心 32GB)
-TOTAL_CORES=10
-TOTAL_MEMORY=32768  # 32GB in MB
+# 检测实际硬件规格并保守配置
+ACTUAL_CORES=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+ACTUAL_MEMORY=$(free -m 2>/dev/null | awk '/^Mem:/{print $2}' || sysctl -n hw.memsize 2>/dev/null | awk '{print int($1/1024/1024)}' || echo 4096)
 
-echo "🖥️  固定硬件规格:"
-echo "  CPU 核心数: $TOTAL_CORES"
-echo " 内存大小: ${TOTAL_MEMORY}MB (32GB)"
-echo " 配置类型: 高性能构建环境"
+echo "🖥️  实际硬件规格:"
+echo "  CPU 核心数: $ACTUAL_CORES"
+echo " 内存大小: ${ACTUAL_MEMORY}MB"
 
-# 使用固定配置的并行任务数
-# 32GB 内存 + 10核心 = 可以使用更多并行任务
-# LibRaw 构建相对简单，可以使用更多并行任务
-JOBS=8  # 使用 8 个并行任务，为系统保留 2 个核心
+# 保守的并行任务配置，避免资源竞争
+if [ "$ACTUAL_MEMORY" -gt 16384 ]; then
+  # 16GB+ 内存
+  JOBS=$((ACTUAL_CORES > 6 ? 6 : ACTUAL_CORES))
+elif [ "$ACTUAL_MEMORY" -gt 8192 ]; then
+  # 8-16GB 内存
+  JOBS=$((ACTUAL_CORES > 4 ? 4 : ACTUAL_CORES))
+else
+  # 8GB 以下内存
+  JOBS=$((ACTUAL_CORES > 2 ? 2 : ACTUAL_CORES))
+fi
 
-echo "📊 使用 $JOBS 个并行任务进行编译 (固定配置: 32GB 内存 + 10 核心)"
-echo "💡 LibRaw 构建相对简单，可以使用更多并行任务"
+echo "📊 使用 $JOBS 个并行任务进行编译 (基于实际硬件: ${ACTUAL_MEMORY}MB 内存 + $ACTUAL_CORES 核心)"
+echo "💡 保守配置，避免资源竞争和系统不稳定"
 
 # 添加构建状态监控
 echo "⏰ 开始时间: $(date)"
 echo "🔄 开始编译 LibRaw，这可能需要几分钟..."
+
+# 后台监控资源使用情况
+monitor_resources() {
+  while true; do
+    echo "📊 资源使用情况:"
+    if command -v free >/dev/null 2>&1; then
+      echo "  内存: $(free -h | awk '/^Mem:/{print $3"/"$2}')"
+    fi
+    echo "  CPU: $(top -l 1 | grep "CPU usage" | awk '{print $3}' 2>/dev/null || echo 'N/A')"
+    echo "  负载: $(uptime | awk -F'load average:' '{print $2}' 2>/dev/null || echo 'N/A')"
+    sleep 30
+  done
+}
+
+# 启动资源监控（后台运行）
+monitor_resources &
+MONITOR_PID=$!
 
 # 使用更详细的构建输出
 if ! make -j$JOBS VERBOSE=1; then
@@ -114,9 +137,13 @@ if ! make -j$JOBS VERBOSE=1; then
   echo "🔄 单线程编译开始..."
   if ! make -j1 VERBOSE=1; then
     echo "❌ 单线程编译也失败，请检查错误信息"
+    kill $MONITOR_PID 2>/dev/null
     exit 1
   fi
 fi
+
+# 停止资源监控
+kill $MONITOR_PID 2>/dev/null
 
 echo "✅ 编译成功完成！"
 echo "⏰ 编译完成时间: $(date)"

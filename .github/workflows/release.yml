@@ -9,6 +9,7 @@ on:
 jobs:
   build-prebuilds:
     strategy:
+      max-parallel: 3 # 最多同时运行3个平台，避免资源竞争
       matrix:
         include:
           - os: ubuntu-latest
@@ -115,7 +116,7 @@ jobs:
         run: |
           echo "🚀 开始构建 LibRaw..."
           echo "⏰ 构建开始时间: $(date)"
-          echo "📊 构建配置: 8个并行任务，32GB内存，10核心"
+          echo "📊 构建配置: 动态并行任务，基于实际硬件规格"
           echo "🔄 构建过程可能需要5-10分钟，请耐心等待..."
           bash scripts/build-libraw.sh
           echo "✅ LibRaw 构建完成"
