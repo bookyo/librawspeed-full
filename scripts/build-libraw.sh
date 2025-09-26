@@ -73,19 +73,36 @@ export LDFLAGS="-fPIC"
 
 # 配置构建
 echo "⚙️  配置 LibRaw 构建..."
-./configure \
-  --enable-static \
-  --disable-shared \
-  --disable-openmp \
-  --disable-examples \
-  --disable-lcms \
-  --disable-jasper \
-  --disable-jpeg \
-  --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
+CONFIGURE_OPTS="--enable-static --disable-shared --disable-openmp --disable-examples --disable-lcms --disable-jasper --disable-jpeg"
+
+# 为 macOS 添加额外优化
+if [ "$PLATFORM" = "darwin" ]; then
+  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-djpeg --disable-thumbnail"
+  echo "🍎 macOS 优化: 禁用额外功能以减少编译时间"
+fi
+
+./configure $CONFIGURE_OPTS --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
 
 # 构建
 echo "🔨 编译 LibRaw..."
-make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+# 使用较少的并行任务以避免资源限制
+JOBS=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+# 限制最大并行任务数
+if [ "$JOBS" -gt 4 ]; then
+  JOBS=4
+fi
+echo "📊 使用 $JOBS 个并行任务进行编译..."
+
+# 添加构建状态监控
+echo "⏰ 开始时间: $(date)"
+if ! make -j$JOBS; then
+  echo "❌ 编译失败，尝试使用单线程编译..."
+  if ! make -j1; then
+    echo "❌ 单线程编译也失败，请检查错误信息"
+    exit 1
+  fi
+fi
+echo "⏰ 编译完成时间: $(date)"
 
 # 安装
 echo "📦 安装 LibRaw..."

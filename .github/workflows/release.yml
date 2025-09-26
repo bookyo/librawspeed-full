@@ -33,7 +33,7 @@ jobs:
             runner: windows-latest
 
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout code
@@ -70,7 +70,12 @@ jobs:
         run: bash scripts/download-dependencies.sh
 
       - name: Build LibRaw
-        run: bash scripts/build-libraw.sh
+        run: |
+          echo "🚀 开始构建 LibRaw..."
+          echo "⏰ 构建开始时间: $(date)"
+          bash scripts/build-libraw.sh
+          echo "✅ LibRaw 构建完成"
+          echo "⏰ 构建结束时间: $(date)"
 
       - name: Generate prebuild for current platform
         run: npm run prebuildify
