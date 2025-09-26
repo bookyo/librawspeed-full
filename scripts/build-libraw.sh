@@ -44,7 +44,7 @@ elif [ "$PLATFORM" = "linux" ]; then
   else
     ARCH="x64"
   fi
-elif [[ "$PLATFORM" == *"mingw"* ]] || [[ "$PLATFORM" == *"msys"* ]] || [[ "$PLATFORM" == *"cygwin"* ]]; then
+elif [[ "$PLATFORM" == *"mingw"* ]] || [[ "$PLATFORM" == *"msys"* ]] || [[ "$PLATFORM" == *"cygwin"* ]] || [[ "$PLATFORM" == *"win32"* ]]; then
   PLATFORM="windows"
   ARCH="x64"
 else
@@ -73,13 +73,20 @@ export LDFLAGS="-fPIC"
 
 # 配置构建
 echo "⚙️  配置 LibRaw 构建..."
-CONFIGURE_OPTS="--enable-static --disable-shared --disable-openmp --disable-examples --disable-lcms --disable-jasper --disable-jpeg"
+CONFIGURE_OPTS="--enable-static --disable-shared --disable-openmp --disable-examples --disable-lcms --disable-jasper"
 
-# 为 macOS 添加额外优化
+# 为不同平台添加优化
 if [ "$PLATFORM" = "darwin" ]; then
-  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-djpeg --disable-thumbnail --disable-dcraw --disable-rawspeed"
-  echo "🍎 macOS 优化: 禁用额外功能以减少编译时间和复杂度"
-  echo "   禁用的功能: djpeg, thumbnail, dcraw, rawspeed"
+  # macOS 只禁用真正不必要的功能
+  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-thumbnail"
+  echo "🍎 macOS 优化: 禁用缩略图生成以减少构建时间"
+  echo "   保留的功能: dcraw 兼容性, rawspeed 解码器, jpeg 支持"
+elif [ "$PLATFORM" = "windows" ]; then
+  # Windows 只禁用真正不必要的功能
+  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-thumbnail"
+  echo "🪟 Windows 优化: 禁用缩略图生成以减少构建时间"
+  echo "   保留的功能: dcraw 兼容性, rawspeed 解码器, jpeg 支持"
+  echo "   使用 MSVC 编译器"
 fi
 
 ./configure $CONFIGURE_OPTS --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
@@ -152,6 +159,23 @@ echo "⏰ 编译完成时间: $(date)"
 echo "📦 安装 LibRaw..."
 make install
 
+# 检查构建结果
+echo "🔍 检查构建结果..."
+BUILD_DIR="$(pwd)/build/${PLATFORM}-${ARCH}"
+echo "📁 安装目录: $BUILD_DIR"
+
+if [ "$PLATFORM" = "windows" ]; then
+  echo "🪟 Windows 构建结果检查:"
+  echo "  检查 lib 目录:"
+  find "$BUILD_DIR" -name "*.lib" -o -name "*.a" | head -10
+  echo "  检查 bin 目录:"
+  find "$BUILD_DIR" -name "*.dll" | head -10
+  echo "  检查 include 目录:"
+  find "$BUILD_DIR" -name "*.h" | head -5
+else
+  echo "📁 构建文件列表:"
+  find "$BUILD_DIR" -type f | head -10
+fi
+
 echo "✅ LibRaw 构建完成！"
-echo "📁 安装目录: $(pwd)/build/${PLATFORM}-${ARCH}"
 echo "================================"

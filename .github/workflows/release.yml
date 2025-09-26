@@ -101,7 +101,15 @@ jobs:
           echo "✅ LibRaw 构建完成"
           echo "⏰ 构建结束时间: $(date)"
           echo "📁 检查构建结果..."
-          ls -la deps/LibRaw-Source/LibRaw-*/build/*/
+          if [ "${{ matrix.platform }}" = "win32" ]; then
+            echo "🪟 Windows 构建调试信息:"
+            echo "  检查 LibRaw 源码目录:"
+            ls -la deps/LibRaw-Source/LibRaw-*/
+            echo "  检查构建目录结构:"
+            find deps/LibRaw-Source/LibRaw-*/build -type f -name "*.lib" -o -name "*.a" -o -name "*.dll" | head -20
+          else
+            ls -la deps/LibRaw-Source/LibRaw-*/build/*/
+          fi
 
       - name: Generate prebuild for current platform
         run: npm run prebuildify

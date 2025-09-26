@@ -17,7 +17,7 @@
       "conditions": [
         ["OS=='win'", {
           "libraries": [
-            "<!(node -e \"const p=require('path');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.a'));\")"
+            "<!(node -e \"const p=require('path');const fs=require('fs');const libPath1=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.a');const libPath2=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.lib');if(fs.existsSync(libPath1)){process.stdout.write(libPath1);}else if(fs.existsSync(libPath2)){process.stdout.write(libPath2);}else{console.error('LibRaw library not found at:', libPath1, 'or', libPath2);process.exit(1);}\")"
           ],
           "msvs_settings": {
             "VCCLCompilerTool": {
@@ -29,7 +29,7 @@
             {
               "destination": "<(module_root_dir)/build/Release/",
               "files": [
-                "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/'+m+'-'+a+'/bin/libraw.dll'));\")"
+                "<!(node -e \"const p=require('path');const fs=require('fs');const dllPath1=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/bin/libraw.dll');const dllPath2=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.dll');if(fs.existsSync(dllPath1)){process.stdout.write(dllPath1);}else if(fs.existsSync(dllPath2)){process.stdout.write(dllPath2);}else{console.error('LibRaw DLL not found at:', dllPath1, 'or', dllPath2);process.exit(1);}\")"
               ]
             }
           ]
