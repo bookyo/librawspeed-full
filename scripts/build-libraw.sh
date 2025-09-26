@@ -36,6 +36,9 @@ elif [ "$PLATFORM" = "linux" ]; then
   else
     ARCH="x64"
   fi
+elif [[ "$PLATFORM" == *"mingw"* ]] || [[ "$PLATFORM" == *"msys"* ]] || [[ "$PLATFORM" == *"cygwin"* ]]; then
+  PLATFORM="windows"
+  ARCH="x64"
 else
   echo "❌ 不支持的平台: $PLATFORM"
   exit 1
