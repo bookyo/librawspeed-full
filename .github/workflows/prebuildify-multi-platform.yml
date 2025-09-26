@@ -49,6 +49,7 @@ jobs:
           cache: "npm"
 
       - name: Install build tools
+        shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             # Windows: 安装 autotools 和 pkg-config
