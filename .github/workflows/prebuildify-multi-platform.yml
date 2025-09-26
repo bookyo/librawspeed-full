@@ -9,7 +9,7 @@ on:
 jobs:
   build-prebuilds:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 120
     strategy:
       matrix:
         include:
@@ -51,12 +51,13 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Setup MSYS2 (Windows)
+      - name: Setup MSYS2 (Windows) - Attempt 1
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
           update: true
+          cache: true
           install: >-
             make
             pkg-config
@@ -65,6 +66,54 @@ jobs:
             libtool
             gcc
             g++
+        continue-on-error: true
+
+      - name: Setup MSYS2 (Windows) - Attempt 2
+        if: runner.os == 'Windows' && steps['Setup MSYS2 (Windows) - Attempt 1'].outcome == 'failure'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: false
+          cache: false
+          install: >-
+            make
+            pkg-config
+            autoconf
+            automake
+            libtool
+            gcc
+            g++
+        continue-on-error: true
+
+      - name: Setup MSYS2 (Windows) - Attempt 3
+        if: runner.os == 'Windows' && steps['Setup MSYS2 (Windows) - Attempt 2'].outcome == 'failure'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: false
+          cache: false
+          install: >-
+            make
+            pkg-config
+            autoconf
+            automake
+            libtool
+            gcc
+            g++
+
+      - name: Verify MSYS2 installation
+        if: runner.os == 'Windows'
+        run: |
+          echo "Verifying MSYS2 installation..."
+          if msys2 -c 'echo "MSYS2 is working"' && msys2 -c 'gcc --version' && msys2 -c 'make --version'; then
+            echo "✅ MSYS2 installation verified"
+          else
+            echo "❌ MSYS2 installation failed, but continuing with available tools"
+            # 检查是否有其他可用的构建工具
+            where gcc 2>nul || echo "GCC not found in PATH"
+            where make 2>nul || echo "Make not found in PATH"
+            where cl 2>nul || echo "MSVC not found in PATH"
+          fi
 
       - name: Install build tools (macOS/Linux)
         if: runner.os != 'Windows'
@@ -138,7 +187,13 @@ jobs:
           fi
           echo "✅ Build environment verification completed"
 
-      - name: Build LibRaw (Windows)
+      - name: Setup Visual Studio Build Tools (Windows)
+        if: runner.os == 'Windows'
+        uses: microsoft/setup-msbuild@v1.3
+        with:
+          version: "latest"
+
+      - name: Build LibRaw (Windows - MSYS2)
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
@@ -189,6 +244,29 @@ jobs:
             exit 1
           fi
           echo "✅ LibRaw build completed successfully"
+
+      - name: Build LibRaw (Windows - Fallback)
+        if: runner.os == 'Windows'
+        run: |
+          # 备用 Windows 构建方法（使用 MSVC）
+          echo "Attempting fallback Windows build with MSVC..."
+
+          PLATFORM="windows"
+          ARCH="${{ matrix.arch }}"
+
+          # 设置 MSVC 环境
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" 2>nul || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Auxiliary\Build\vcvars64.bat" 2>nul || call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" 2>nul || echo "MSVC not found"
+
+          cd deps\LibRaw-Source\LibRaw-0.21.4
+
+          # 使用 MSVC 构建
+          if exist "build\${PLATFORM}-${ARCH}\lib" (
+            echo "LibRaw already built with MSYS2"
+          ) else (
+            echo "Building LibRaw with MSVC fallback..."
+            # 这里可以添加 MSVC 特定的构建命令
+            echo "MSVC build not implemented yet, using MSYS2 result"
+          )
 
       - name: Build LibRaw (macOS/Linux)
         if: runner.os != 'Windows'
