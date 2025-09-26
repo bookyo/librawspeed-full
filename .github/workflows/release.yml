@@ -213,17 +213,17 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
+      - name: Clean existing prebuilds in workspace (before download)
+        shell: bash
+        run: |
+          rm -rf prebuilds || true
+
       - name: Download all prebuild artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: prebuild-*
           path: .
           merge-multiple: true
-
-      - name: Clean existing prebuilds in workspace
-        shell: bash
-        run: |
-          rm -rf prebuilds || true
 
       - name: Show prebuilds in workspace
         run: |
