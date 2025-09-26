@@ -52,6 +52,7 @@ jobs:
           bash scripts/download-dependencies.sh
 
       - name: Build dependencies
+        shell: bash
         run: |
           # 设置平台和架构变量
           if [ "$RUNNER_OS" = "Windows" ]; then
