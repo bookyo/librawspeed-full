@@ -47,9 +47,6 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Download dependencies
         run: |
           bash scripts/download-dependencies.sh
@@ -69,6 +66,9 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$(pwd)/../build/$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)" -DBUILD_SHARED_LIBS=OFF -DENABLE_OPENMP=OFF -DENABLE_LCMS=ON -DLCMS2_INCLUDE_DIR="../../../lcms2-source/lcms2-2.17/../build/$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)/include" -DLCMS2_LIBRARY="../../../lcms2-source/lcms2-2.17/../build/$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)/lib/lcms2.a" ..
           make -j$(nproc)
           make install
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build prebuildify
         run: npm run prebuildify
