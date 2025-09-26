@@ -149,10 +149,14 @@ jobs:
           ls -la deps/LibRaw-Source/LibRaw-*/build/*/
 
       - name: Generate prebuild for current platform
-        run: npm run prebuildify
-        env:
-          PREBUILD_PLATFORM: ${{ matrix.platform }}
-          PREBUILD_ARCH: ${{ matrix.arch }}
+        run: |
+          if [ "${{ matrix.platform }}" = "win32" ]; then
+            npx prebuildify --napi --platform win32 --arch x64
+          elif [ "${{ matrix.platform }}" = "darwin" ]; then
+            npx prebuildify --napi --platform darwin --arch ${{ matrix.arch }}
+          elif [ "${{ matrix.platform }}" = "linux" ]; then
+            npx prebuildify --napi --platform linux --arch x64
+          fi
 
       - name: Verify prebuild output
         if: matrix.platform == 'win32'
@@ -160,10 +164,11 @@ jobs:
         run: |
           echo Verifying Windows prebuild exists
           dir prebuilds\
-          if not exist prebuilds\win32-x64\*.node (
-            echo Missing Windows prebuild at prebuilds\win32-x64
+          if not exist prebuilds\win32-x64\librawspeed.node (
+            echo Missing Windows prebuild at prebuilds\win32-x64\librawspeed.node
             exit /b 2
           )
+          echo Windows prebuild verified successfully
 
       - name: Verify prebuild output (non-Windows)
         if: matrix.platform != 'win32'
