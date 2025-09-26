@@ -9,6 +9,7 @@ on:
 jobs:
   build-prebuilds:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       matrix:
         include:
@@ -47,6 +48,20 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      - name: Install build tools
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            # Windows: 安装 autotools
+            choco install autoconf automake libtool make -y
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            # macOS: 安装 autotools
+            brew install autoconf automake libtool
+          else
+            # Linux: 安装 autotools
+            sudo apt-get update
+            sudo apt-get install -y autoconf automake libtool build-essential
+          fi
+
       - name: Download dependencies
         run: |
           bash scripts/download-dependencies.sh
@@ -71,16 +86,23 @@ jobs:
 
           # 构建 lcms2
           cd deps/lcms2-source/lcms2-2.17
-          ./configure --enable-static --disable-shared --prefix="$(pwd)/../build/${PLATFORM}-${ARCH}"
+          ./configure --enable-static --disable-shared --prefix="$(pwd)/../build/${PLATFORM}-${ARCH}" --disable-utils
           make -j${JOBS}
           make install
 
           # 构建 LibRaw (使用 autotools)
           cd ../../LibRaw-Source/LibRaw-0.21.4
-          export PKG_CONFIG_PATH="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib/pkgconfig:$PKG_CONFIG_PATH"
-          export CPPFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include $CPPFLAGS"
-          export LDFLAGS="-L$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib $LDFLAGS"
-          ./configure --enable-static --disable-shared --disable-openmp --prefix="$(pwd)/build/${PLATFORM}-${ARCH}" --with-lcms2="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}"
+          # 生成 configure 脚本 (官方文档要求)
+          autoreconf --install
+          # 完全禁用系统 lcms2，强制使用我们构建的版本
+          export PKG_CONFIG_PATH="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib/pkgconfig"
+          export CPPFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include"
+          export LDFLAGS="-L$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib"
+          export LCMS2_CFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include"
+          export LCMS2_LIBS="-L$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib -lcms2"
+          # 移除系统路径，避免找到系统 lcms2
+          export PATH="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/bin:$(echo $PATH | sed 's|/opt/homebrew/bin:||g' | sed 's|/usr/local/bin:||g')"
+          ./configure --enable-static --disable-shared --disable-openmp --disable-examples --prefix="$(pwd)/build/${PLATFORM}-${ARCH}" --with-lcms2="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}"
           make -j${JOBS}
           make install
 
