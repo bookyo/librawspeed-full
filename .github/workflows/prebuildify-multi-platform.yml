@@ -53,18 +53,31 @@ jobs:
 
       - name: Build dependencies
         run: |
+          # 设置平台和架构变量
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            PLATFORM="windows"
+            ARCH="x64"
+            JOBS=4
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            PLATFORM="darwin"
+            ARCH="arm64"
+            JOBS=$(sysctl -n hw.ncpu)
+          else
+            PLATFORM="linux"
+            ARCH="x64"
+            JOBS=$(nproc)
+          fi
+
           # 构建 lcms2
           cd deps/lcms2-source/lcms2-2.17
-          ./configure --enable-static --disable-shared --prefix="$(pwd)/../build/$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)"
-          make -j$(nproc)
+          ./configure --enable-static --disable-shared --prefix="$(pwd)/../build/${PLATFORM}-${ARCH}"
+          make -j${JOBS}
           make install
 
-          # 构建 LibRaw
+          # 构建 LibRaw (使用 autotools)
           cd ../../LibRaw-Source/LibRaw-0.21.4
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$(pwd)/../build/$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)" -DBUILD_SHARED_LIBS=OFF -DENABLE_OPENMP=OFF -DENABLE_LCMS=ON -DLCMS2_INCLUDE_DIR="../../../lcms2-source/lcms2-2.17/../build/$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)/include" -DLCMS2_LIBRARY="../../../lcms2-source/lcms2-2.17/../build/$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)/lib/lcms2.a" ..
-          make -j$(nproc)
+          ./configure --enable-static --disable-shared --disable-openmp --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
+          make -j${JOBS}
           make install
 
       - name: Install dependencies
