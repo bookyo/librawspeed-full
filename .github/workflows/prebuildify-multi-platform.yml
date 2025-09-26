@@ -77,7 +77,10 @@ jobs:
 
           # 构建 LibRaw (使用 autotools)
           cd ../../LibRaw-Source/LibRaw-0.21.4
-          ./configure --enable-static --disable-shared --disable-openmp --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
+          export PKG_CONFIG_PATH="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib/pkgconfig:$PKG_CONFIG_PATH"
+          export CPPFLAGS="-I$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/include $CPPFLAGS"
+          export LDFLAGS="-L$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}/lib $LDFLAGS"
+          ./configure --enable-static --disable-shared --disable-openmp --prefix="$(pwd)/build/${PLATFORM}-${ARCH}" --with-lcms2="$(pwd)/../lcms2-source/build/${PLATFORM}-${ARCH}"
           make -j${JOBS}
           make install
 
