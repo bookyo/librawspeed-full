@@ -148,15 +148,23 @@ jobs:
           echo "📁 检查构建结果..."
           ls -la deps/LibRaw-Source/LibRaw-*/build/*/
 
-      - name: Generate prebuild for current platform
+      - name: Generate prebuild (Windows)
+        if: matrix.platform == 'win32'
+        shell: cmd
         run: |
-          if [ "${{ matrix.platform }}" = "win32" ]; then
-            npx prebuildify --napi --platform win32 --arch x64
-          elif [ "${{ matrix.platform }}" = "darwin" ]; then
-            npx prebuildify --napi --platform darwin --arch ${{ matrix.arch }}
-          elif [ "${{ matrix.platform }}" = "linux" ]; then
-            npx prebuildify --napi --platform linux --arch x64
-          fi
+          npx prebuildify --napi --platform win32 --arch x64
+
+      - name: Generate prebuild (macOS)
+        if: matrix.platform == 'darwin'
+        shell: bash
+        run: |
+          npx prebuildify --napi --platform darwin --arch ${{ matrix.arch }}
+
+      - name: Generate prebuild (Linux)
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          npx prebuildify --napi --platform linux --arch x64
 
       - name: Verify prebuild output
         if: matrix.platform == 'win32'
