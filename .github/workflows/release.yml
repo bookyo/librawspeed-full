@@ -1,67 +1,189 @@
-name: Release with Prebuilds
+name: Build and Release
 
 on:
-    push:
-        tags:
-            - "v*"
-    workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        needs: build-prebuilds
-        timeout-minutes: 10
+  build-prebuilds:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            runner: ubuntu-latest
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            runner: ubuntu-latest
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+            runner: macos-latest
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            runner: macos-latest
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            runner: windows-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "22"
-                  registry-url: "https://registry.npmjs.org"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Download prebuilds
-              uses: actions/download-artifact@v4
-              with:
-                  name: prebuilds-all-platforms
-                  path: prebuilds/
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Run tests
-              run: npm test
+      - name: Install build tools (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool build-essential pkg-config
 
-            - name: Publish to npm
-              run: npm publish
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Install build tools (macOS)
+        if: matrix.platform == 'darwin'
+        run: |
+          brew install autoconf automake libtool pkg-config
 
-            - name: Create GitHub Release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: Release ${{ github.ref }}
-                  body: |
-                      ## 🎉 LibRaw Node.js 模块发布
+      - name: Install build tools (Windows)
+        if: matrix.platform == 'win32'
+        run: |
+          echo "Using pre-installed MSVC tools"
 
-                      ### 📦 包含的预构建文件
-                      - Linux x64
-                      - Linux ARM64
-                      - macOS x64
-                      - macOS ARM64
-                      - Windows x64
+      - name: Download LibRaw dependencies
+        run: bash scripts/download-dependencies.sh
 
-                      ### 🚀 安装
-                      ```bash
-                      npm install librawspeed
-                      ```
+      - name: Build LibRaw
+        run: bash scripts/build-libraw.sh
 
-                      ### 📋 变更日志
-                      请查看 [CHANGELOG.md](./CHANGELOG.md) 了解详细变更。
-                  draft: false
-                  prerelease: false
+      - name: Generate prebuild for current platform
+        run: npm run prebuildify
+        env:
+          PREBUILD_PLATFORM: ${{ matrix.platform }}
+          PREBUILD_ARCH: ${{ matrix.arch }}
+
+      - name: Upload prebuild artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuild-${{ matrix.platform }}-${{ matrix.arch }}
+          path: prebuilds/
+          retention-days: 30
+
+  collect-prebuilds:
+    runs-on: ubuntu-latest
+    needs: build-prebuilds
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all prebuild artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: prebuilds/
+
+      - name: Merge prebuilds
+        run: |
+          echo "🔗 合并所有平台的预构建文件..."
+
+          # 创建统一的 prebuilds 目录
+          mkdir -p prebuilds-unified
+
+          # 合并所有平台的预构建文件
+          for dir in prebuilds-*/prebuilds/*; do
+            if [ -d "$dir" ]; then
+              platform_arch=$(basename "$dir")
+              echo "📁 处理平台: $platform_arch"
+              cp -r "$dir" "prebuilds-unified/"
+            fi
+          done
+
+          # 显示最终结构
+          echo "📊 最终预构建文件结构:"
+          find prebuilds-unified -name "*.node" -type f | sort
+
+          # 统计信息
+          echo "📈 统计信息:"
+          echo "总文件数: $(find prebuilds-unified -name "*.node" -type f | wc -l)"
+          echo "总大小: $(du -sh prebuilds-unified/ | cut -f1)"
+
+      - name: Upload unified prebuilds
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuilds-all-platforms
+          path: prebuilds-unified/
+          retention-days: 30
+
+  release:
+    runs-on: ubuntu-latest
+    needs: collect-prebuilds
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Download prebuilds
+        uses: actions/download-artifact@v4
+        with:
+          name: prebuilds-all-platforms
+          path: prebuilds/
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## 🎉 LibRaw Node.js 模块发布
+
+            ### 📦 包含的预构建文件
+            - Linux x64
+            - Linux ARM64
+            - macOS x64
+            - macOS ARM64
+            - Windows x64
+
+            ### 🚀 安装
+            ```bash
+            npm install librawspeed
+            ```
+
+            ### 📋 变更日志
+            请查看 [CHANGELOG.md](./CHANGELOG.md) 了解详细变更。
+          draft: false
+          prerelease: false
