@@ -4,6 +4,9 @@ set -euo pipefail
 # LibRaw 构建脚本
 # 确保使用 -fPIC 编译选项来支持共享对象链接
 
+# 默认不跳过 configure
+SKIP_CONFIGURE=false
+
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 VERSION="${LIBRAW_VERSION:-0.21.4}"
 SOURCE_DIR="$ROOT_DIR/deps/LibRaw-Source/LibRaw-${VERSION}"
