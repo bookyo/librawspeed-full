@@ -77,8 +77,9 @@ CONFIGURE_OPTS="--enable-static --disable-shared --disable-openmp --disable-exam
 
 # 为 macOS 添加额外优化
 if [ "$PLATFORM" = "darwin" ]; then
-  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-djpeg --disable-thumbnail"
-  echo "🍎 macOS 优化: 禁用额外功能以减少编译时间"
+  CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-djpeg --disable-thumbnail --disable-dcraw --disable-rawspeed"
+  echo "🍎 macOS 优化: 禁用额外功能以减少编译时间和复杂度"
+  echo "   禁用的功能: djpeg, thumbnail, dcraw, rawspeed"
 fi
 
 ./configure $CONFIGURE_OPTS --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
@@ -97,19 +98,27 @@ echo " 配置类型: 高性能构建环境"
 
 # 使用固定配置的并行任务数
 # 32GB 内存 + 10核心 = 可以使用更多并行任务
+# LibRaw 构建相对简单，可以使用更多并行任务
 JOBS=8  # 使用 8 个并行任务，为系统保留 2 个核心
 
 echo "📊 使用 $JOBS 个并行任务进行编译 (固定配置: 32GB 内存 + 10 核心)"
+echo "💡 LibRaw 构建相对简单，可以使用更多并行任务"
 
 # 添加构建状态监控
 echo "⏰ 开始时间: $(date)"
-if ! make -j$JOBS; then
+echo "🔄 开始编译 LibRaw，这可能需要几分钟..."
+
+# 使用更详细的构建输出
+if ! make -j$JOBS VERBOSE=1; then
   echo "❌ 编译失败，尝试使用单线程编译..."
-  if ! make -j1; then
+  echo "🔄 单线程编译开始..."
+  if ! make -j1 VERBOSE=1; then
     echo "❌ 单线程编译也失败，请检查错误信息"
     exit 1
   fi
 fi
+
+echo "✅ 编译成功完成！"
 echo "⏰ 编译完成时间: $(date)"
 
 # 安装
