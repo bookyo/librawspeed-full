@@ -8,19 +8,16 @@
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
-        "deps/LibRaw-Source/LibRaw-0.21.4/libraw",
-        "deps/lcms2-source/lcms2-2.17/include"
+        "deps/LibRaw-Source/LibRaw-0.21.4/libraw"
       ],
       "defines": [
         "NAPI_DISABLE_CPP_EXCEPTIONS",
-        "LIBRAW_NO_MEMPOOL_CHECK",
-        "USE_LCMS2"
+        "LIBRAW_NO_MEMPOOL_CHECK"
       ],
       "conditions": [
         ["OS=='win'", {
           "libraries": [
-            "<!(node -e \"const p=require('path');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.a'));\")",
-            "<!(node -e \"const p=require('path');process.stdout.write(p.resolve('deps/lcms2-source/build/windows-x64/lib/lcms2.lib'));\")"
+            "<!(node -e \"const p=require('path');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.a'));\")"
           ],
           "msvs_settings": {
             "VCCLCompilerTool": {
@@ -39,15 +36,13 @@
         }],
         ["OS=='mac'", {
           "libraries": [
-            "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/'+m+'-'+a+'/lib/libraw.a'));\")",
-            "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/lcms2-source/build/'+m+'-'+a+'/lib/lcms2.a'));\")"
+            "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/'+m+'-'+a+'/lib/libraw.a'));\")"
           ]
         }],
         ["OS=='linux'", {
           "cflags": ["-fPIC"],
           "libraries": [
-            "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/'+m+'-'+a+'/lib/libraw.a'));\")",
-            "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/lcms2-source/build/'+m+'-'+a+'/lib/lcms2.a'));\")"
+            "<!(node -e \"const p=require('path');const plat=process.platform;const arch=process.arch;const m=(plat==='win32'?'windows':plat);const a=(arch==='arm64'?'arm64':'x64');process.stdout.write(p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/'+m+'-'+a+'/lib/libraw.a'));\")"
           ]
         }]
       ]
