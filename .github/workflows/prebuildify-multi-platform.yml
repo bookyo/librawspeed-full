@@ -52,25 +52,28 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-            # Windows: 使用更轻量的方法
+            # Windows: 使用更稳定的方法
             echo "Installing Windows build tools..."
-            # 安装 MSYS2，设置超时和重试
-            choco install msys2 --timeout 1800 --retry-count 3 -y
+            # 尝试安装 MSYS2，如果失败则跳过 Windows 构建
+            choco install msys2 --timeout 2400 --retry-count 2 -y || {
+              echo "MSYS2 installation failed, skipping Windows build"
+              echo "SKIP_WINDOWS_BUILD=true" >> $GITHUB_ENV
+              exit 0
+            }
             # 等待安装完成
-            sleep 15
+            sleep 20
             # 检查 MSYS2 是否安装成功
             if [ -d "/c/tools/msys64" ]; then
               echo "MSYS2 installed successfully"
               # 设置 PATH
               export PATH="/c/tools/msys64/usr/bin:$PATH"
               # 更新包数据库（设置超时）
-              timeout 300 /c/tools/msys64/usr/bin/pacman -Sy --noconfirm || echo "Package update timeout, continuing..."
+              timeout 600 /c/tools/msys64/usr/bin/pacman -Sy --noconfirm || echo "Package update timeout, continuing..."
               # 安装基本工具
-              timeout 300 /c/tools/msys64/usr/bin/pacman -S --noconfirm make pkg-config || echo "Tool installation timeout, continuing..."
+              timeout 600 /c/tools/msys64/usr/bin/pacman -S --noconfirm make pkg-config || echo "Tool installation timeout, continuing..."
             else
-              echo "MSYS2 installation failed, trying alternative approach..."
-              # 备用方案：使用预构建的 LibRaw 或跳过 Windows 构建
-              exit 1
+              echo "MSYS2 installation failed, skipping Windows build"
+              echo "SKIP_WINDOWS_BUILD=true" >> $GITHUB_ENV
             fi
           elif [ "$RUNNER_OS" = "macOS" ]; then
             # macOS: 安装 autotools 和 pkg-config
@@ -99,6 +102,12 @@ jobs:
       - name: Build LibRaw (no lcms2)
         shell: bash
         run: |
+          # 检查是否跳过 Windows 构建
+          if [ "$SKIP_WINDOWS_BUILD" = "true" ] && [ "$RUNNER_OS" = "Windows" ]; then
+            echo "Skipping Windows build due to MSYS2 installation failure"
+            exit 0
+          fi
+
           # 设置平台和架构变量
           if [ "$RUNNER_OS" = "Windows" ]; then
             PLATFORM="windows"
@@ -154,12 +163,18 @@ jobs:
         run: npm ci
 
       - name: Build prebuildify
-        run: npm run prebuildify
+        run: |
+          if [ "$SKIP_WINDOWS_BUILD" = "true" ] && [ "$RUNNER_OS" = "Windows" ]; then
+            echo "Skipping prebuildify for Windows due to MSYS2 installation failure"
+            exit 0
+          fi
+          npm run prebuildify
         env:
           npm_config_arch: ${{ matrix.arch }}
           npm_config_platform: ${{ matrix.platform }}
 
       - name: Upload prebuilds
+        if: env.SKIP_WINDOWS_BUILD != 'true' || runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: prebuilds-${{ matrix.platform }}-${{ matrix.arch }}
