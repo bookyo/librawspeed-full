@@ -118,6 +118,9 @@ jobs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
           where cl
           where nmake
+          if not exist lib mkdir lib
+          if not exist object mkdir object
+          if not exist bin mkdir bin
           nmake /nologo /f Makefile.msvc clean
           nmake /nologo /f Makefile.msvc lib\libraw_static.lib
           if not exist lib\libraw_static.lib (
