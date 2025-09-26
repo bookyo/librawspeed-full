@@ -204,12 +204,12 @@ if [ "$PLATFORM" = "windows" ]; then
   mkdir -p "build/${PLATFORM}-${ARCH}/include"
   
   # 复制生成的文件
-  if [ -f "lib/libraw_static.lib" ]; then
-    cp "lib/libraw_static.lib" "build/${PLATFORM}-${ARCH}/lib/"
+  if [ -f "libraw_static.lib" ]; then
+    cp "libraw_static.lib" "build/${PLATFORM}-${ARCH}/"
     echo "   复制 libraw_static.lib"
   fi
-  if [ -f "lib/libraw.lib" ]; then
-    cp "lib/libraw.lib" "build/${PLATFORM}-${ARCH}/lib/"
+  if [ -f "libraw.lib" ]; then
+    cp "libraw.lib" "build/${PLATFORM}-${ARCH}/"
     echo "   复制 libraw.lib"
   fi
   if [ -f "bin/libraw.dll" ]; then
