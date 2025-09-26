@@ -87,6 +87,12 @@ jobs:
         if: matrix.platform == 'win32'
         run: |
           echo "Using pre-installed MSVC tools"
+          echo "检查 MSVC 环境:"
+          where cl
+          cl /?
+          echo "检查构建工具:"
+          where nmake
+          where cmake
 
       - name: Download LibRaw dependencies
         run: bash scripts/download-dependencies.sh

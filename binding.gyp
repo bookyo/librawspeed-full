@@ -17,7 +17,7 @@
       "conditions": [
         ["OS=='win'", {
           "libraries": [
-            "<!(node -e \"const p=require('path');const fs=require('fs');const libPath1=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.a');const libPath2=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.lib');if(fs.existsSync(libPath1)){process.stdout.write(libPath1);}else if(fs.existsSync(libPath2)){process.stdout.write(libPath2);}else{console.error('LibRaw library not found at:', libPath1, 'or', libPath2);process.exit(1);}\")"
+            "<!(node -e \"const p=require('path');const fs=require('fs');const basePath='deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64';const possiblePaths=[p.resolve(basePath,'lib/libraw.a'),p.resolve(basePath,'lib/libraw.lib'),p.resolve(basePath,'libraw.a'),p.resolve(basePath,'libraw.lib'),p.resolve(basePath,'.libs/libraw.a'),p.resolve(basePath,'.libs/libraw.lib')];let foundPath=null;for(const path of possiblePaths){if(fs.existsSync(path)){foundPath=path;break;}}if(foundPath){process.stdout.write(foundPath);}else{console.error('LibRaw library not found. Searched paths:',possiblePaths);process.exit(1);}\")"
           ],
           "msvs_settings": {
             "VCCLCompilerTool": {
@@ -29,7 +29,7 @@
             {
               "destination": "<(module_root_dir)/build/Release/",
               "files": [
-                "<!(node -e \"const p=require('path');const fs=require('fs');const dllPath1=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/bin/libraw.dll');const dllPath2=p.resolve('deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64/lib/libraw.dll');if(fs.existsSync(dllPath1)){process.stdout.write(dllPath1);}else if(fs.existsSync(dllPath2)){process.stdout.write(dllPath2);}else{console.error('LibRaw DLL not found at:', dllPath1, 'or', dllPath2);process.exit(1);}\")"
+                "<!(node -e \"const p=require('path');const fs=require('fs');const basePath='deps/LibRaw-Source/LibRaw-0.21.4/build/windows-x64';const possiblePaths=[p.resolve(basePath,'bin/libraw.dll'),p.resolve(basePath,'lib/libraw.dll'),p.resolve(basePath,'libraw.dll'),p.resolve(basePath,'.libs/libraw.dll')];let foundPath=null;for(const path of possiblePaths){if(fs.existsSync(path)){foundPath=path;break;}}if(foundPath){process.stdout.write(foundPath);}else{console.log('LibRaw DLL not found, skipping copy. Searched paths:',possiblePaths);process.exit(0);}\")"
               ]
             }
           ]

@@ -82,11 +82,16 @@ if [ "$PLATFORM" = "darwin" ]; then
   echo "🍎 macOS 优化: 禁用缩略图生成以减少构建时间"
   echo "   保留的功能: dcraw 兼容性, rawspeed 解码器, jpeg 支持"
 elif [ "$PLATFORM" = "windows" ]; then
-  # Windows 只禁用真正不必要的功能
+  # Windows 特殊配置
   CONFIGURE_OPTS="$CONFIGURE_OPTS --disable-thumbnail"
   echo "🪟 Windows 优化: 禁用缩略图生成以减少构建时间"
   echo "   保留的功能: dcraw 兼容性, rawspeed 解码器, jpeg 支持"
   echo "   使用 MSVC 编译器"
+  
+  # Windows 上可能需要特殊的编译器设置
+  export CC=cl
+  export CXX=cl
+  echo "   设置编译器: CC=$CC, CXX=$CXX"
 fi
 
 ./configure $CONFIGURE_OPTS --prefix="$(pwd)/build/${PLATFORM}-${ARCH}"
@@ -166,12 +171,19 @@ echo "📁 安装目录: $BUILD_DIR"
 
 if [ "$PLATFORM" = "windows" ]; then
   echo "🪟 Windows 构建结果检查:"
+  echo "  构建目录: $BUILD_DIR"
+  echo "  检查整个构建目录结构:"
+  find "$BUILD_DIR" -type f | head -20
   echo "  检查 lib 目录:"
   find "$BUILD_DIR" -name "*.lib" -o -name "*.a" | head -10
   echo "  检查 bin 目录:"
   find "$BUILD_DIR" -name "*.dll" | head -10
+  echo "  检查 .libs 目录:"
+  find "$BUILD_DIR" -path "*/.libs/*" -name "*.lib" -o -name "*.a" | head -10
   echo "  检查 include 目录:"
   find "$BUILD_DIR" -name "*.h" | head -5
+  echo "  检查 LibRaw 源码目录:"
+  find "deps/LibRaw-Source/LibRaw-0.21.4" -name "*.lib" -o -name "*.a" -o -name "*.dll" | head -10
 else
   echo "📁 构建文件列表:"
   find "$BUILD_DIR" -type f | head -10
