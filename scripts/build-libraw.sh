@@ -168,7 +168,32 @@ if [ "$PLATFORM" = "windows" ]; then
   echo "🪟 使用 nmake 构建 LibRaw..."
   # 仅构建静态库，避免生成 DLL 及 .exp 相关问题
   # 在 bash 中通过 cmd 加载 VS 开发环境后再执行 nmake
-  if ! cmd /V:ON /C "call \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\Tools\\VsDevCmd.bat\" -arch=amd64 -host_arch=amd64 && echo VSDevCmd loaded && where cl && where nmake && nmake /nologo /f Makefile.msvc clean && nmake /nologo /f Makefile.msvc lib\\libraw_static.lib && if exist lib\\libraw_static.lib (echo BUILT_STATIC=1) else (echo Static lib not found, trying 'all' & nmake /nologo /f Makefile.msvc all)"; then
+  BUILD_BAT="build_libraw_static.bat"
+  cat > "$BUILD_BAT" <<'BAT'
+@echo on
+setlocal EnableExtensions
+call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
+echo VSDevCmd loaded
+where cl
+where nmake
+echo Current dir:
+cd
+dir /b
+nmake /nologo /f Makefile.msvc clean
+nmake /nologo /f Makefile.msvc lib\libraw_static.lib
+if exist lib\libraw_static.lib (
+  echo STATIC LIB BUILT OK
+  dir /b lib
+  exit /b 0
+) else (
+  echo Static lib not found, trying 'all'
+  nmake /nologo /f Makefile.msvc all
+  dir /b lib
+  if exist lib\libraw_static.lib (exit /b 0) else (exit /b 2)
+)
+BAT
+
+  if ! cmd /c "$BUILD_BAT"; then
     echo "❌ nmake 编译失败，请检查错误信息"
     kill $MONITOR_PID 2>/dev/null
     exit 1
