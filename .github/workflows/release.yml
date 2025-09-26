@@ -106,9 +106,11 @@ jobs:
           arch: x64
 
       - name: Download LibRaw dependencies
+        shell: bash
         run: bash scripts/download-dependencies.sh
 
       - name: Build LibRaw
+        shell: bash
         run: |
           echo "🚀 开始构建 LibRaw..."
           echo "⏰ 构建开始时间: $(date)"
