@@ -98,6 +98,7 @@ private:
     static Napi::Value GetCapabilities(const Napi::CallbackInfo &info);
     static Napi::Value GetCameraList(const Napi::CallbackInfo &info);
     static Napi::Value GetCameraCount(const Napi::CallbackInfo &info);
+    static Napi::Value IsRawFile(const Napi::CallbackInfo &info);
 
     // 辅助方法
     Napi::Object CreateImageDataObject(Napi::Env env, libraw_processed_image_t *img);

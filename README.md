@@ -154,6 +154,13 @@ npm run cross-compile:all
 const LibRaw = require("librawspeed");
 
 async function processRAW() {
+  // 🆕 检查文件是否为 LibRaw 支持的 RAW 格式
+  const checkResult = LibRaw.isRawFile('photo.cr2');
+  if (!checkResult.isRawFile) {
+    console.log('不是支持的 RAW 文件:', checkResult.message);
+    return;
+  }
+  
   const processor = new LibRaw();
 
   try {
@@ -996,6 +1003,50 @@ npm run convert:jpeg <input-dir> [output-dir] [preset]
 获取支持的相机型号数量。
 
 - **返回** `{number}` - 相机数量（通常 1000+）
+
+#### `LibRaw.isRawFile(filePath)` 🆕
+
+检查文件是否为 LibRaw 支持的 RAW 格式。
+
+- **filePath** `{string}` - 要检查的文件路径
+- **返回** `{Object}` - 检查结果对象：
+  ```javascript
+  {
+    isRawFile: boolean,    // 是否为 LibRaw 支持的 RAW 文件
+    success: boolean,      // 检查是否成功
+    message: string,       // 详细信息
+    errorCode?: number     // 错误代码（仅失败时）
+  }
+  ```
+
+**示例：**
+
+```javascript
+// 检查单个文件
+const result = LibRaw.isRawFile('photo.cr2');
+if (result.isRawFile) {
+  console.log('✅ 这是 LibRaw 支持的 RAW 文件');
+} else {
+  console.log('❌ 不是支持的 RAW 文件:', result.message);
+}
+
+// 过滤目录中的 RAW 文件
+const files = fs.readdirSync(dir);
+const rawFiles = files.filter(file => 
+  LibRaw.isRawFile(path.join(dir, file)).isRawFile
+);
+
+// 上传前验证
+if (!LibRaw.isRawFile(uploadedFile).isRawFile) {
+  throw new Error('请上传 LibRaw 支持的 RAW 格式文件');
+}
+```
+
+**优势：**
+- ✅ 智能识别 - 利用 LibRaw 内部机制，支持 100+ 种 RAW 格式
+- ✅ 无需维护 - 不需要手动维护扩展名列表
+- ✅ 轻量级 - 只进行格式识别，不完全加载文件
+- ✅ 准确可靠 - 基于文件内容判断，而非仅靠扩展名
 
 ## 测试
 

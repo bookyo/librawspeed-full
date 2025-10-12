@@ -653,6 +653,18 @@ declare module "libraw" {
      * Get count of supported camera models
      */
     static getCameraCount(): number;
+
+    /**
+     * Check if a file is a RAW format supported by LibRaw
+     * @param filePath Path to the file to check
+     * @returns Object containing check result
+     */
+    static isRawFile(filePath: string): {
+      isRawFile: boolean;
+      success: boolean;
+      message: string;
+      errorCode?: number;
+    };
   }
 
   export = LibRaw;

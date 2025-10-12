@@ -52,7 +52,7 @@ Napi::Object LibRawWrapper::Init(Napi::Env env, Napi::Object exports)
                                                              InstanceMethod("version", &LibRawWrapper::Version), InstanceMethod("versionNumber", &LibRawWrapper::VersionNumber),
 
                                                              // 静态方法
-                                                             StaticMethod("getVersion", &LibRawWrapper::GetVersion), StaticMethod("getCapabilities", &LibRawWrapper::GetCapabilities), StaticMethod("getCameraList", &LibRawWrapper::GetCameraList), StaticMethod("getCameraCount", &LibRawWrapper::GetCameraCount)});
+                                                             StaticMethod("getVersion", &LibRawWrapper::GetVersion), StaticMethod("getCapabilities", &LibRawWrapper::GetCapabilities), StaticMethod("getCameraList", &LibRawWrapper::GetCameraList), StaticMethod("getCameraCount", &LibRawWrapper::GetCameraCount), StaticMethod("isRawFile", &LibRawWrapper::IsRawFile)});
 
     constructor = Napi::Persistent(func);
     constructor.SuppressDestruct();
@@ -902,6 +902,59 @@ Napi::Value LibRawWrapper::GetCameraCount(const Napi::CallbackInfo &info)
 
     int count = LibRaw::cameraCount();
     return Napi::Number::New(env, count);
+}
+
+Napi::Value LibRawWrapper::IsRawFile(const Napi::CallbackInfo &info)
+{
+    Napi::Env env = info.Env();
+
+    // 参数验证
+    if (info.Length() < 1)
+    {
+        Napi::TypeError::New(env, "需要一个参数：文件路径").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
+    if (!info[0].IsString())
+    {
+        Napi::TypeError::New(env, "文件路径必须是字符串").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
+    std::string filename = info[0].As<Napi::String>().Utf8Value();
+
+    // 创建临时 LibRaw 实例用于测试
+    LibRaw tempProcessor;
+
+    // 尝试打开并识别文件
+    int ret = tempProcessor.open_file(filename.c_str());
+
+    // 清理资源
+    tempProcessor.recycle();
+
+    // 根据返回值判断是否为支持的 RAW 文件
+    // LIBRAW_SUCCESS (0) 表示成功识别
+    bool isRaw = (ret == LIBRAW_SUCCESS);
+
+    // 创建返回对象，包含详细信息
+    Napi::Object result = Napi::Object::New(env);
+    result.Set("isRawFile", Napi::Boolean::New(env, isRaw));
+    result.Set("success", Napi::Boolean::New(env, isRaw));
+
+    if (isRaw)
+    {
+        result.Set("message", Napi::String::New(env, "文件是支持的 RAW 格式"));
+    }
+    else
+    {
+        // 提供错误信息
+        const char *errorMsg = LibRaw::strerror(ret);
+        std::string msg = errorMsg ? errorMsg : "未知错误";
+        result.Set("message", Napi::String::New(env, "不是支持的 RAW 格式: " + msg));
+        result.Set("errorCode", Napi::Number::New(env, ret));
+    }
+
+    return result;
 }
 
 // ============== 扩展实用函数 ==============
