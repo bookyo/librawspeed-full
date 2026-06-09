@@ -175,6 +175,12 @@ jobs:
         run: |
           npx prebuildify --napi --platform darwin --arch ${{ matrix.arch }}
 
+      - name: Generate prebuild (Linux)
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          npx prebuildify --napi --platform linux --arch x64
+
       - name: Verify prebuild output (POSIX)
         if: matrix.platform != 'win32'
         shell: bash
@@ -186,12 +192,6 @@ jobs:
             echo "Missing prebuild at $PREBUILD_PATH" >&2
             exit 2
           fi
-
-      - name: Generate prebuild (Linux)
-        if: matrix.platform == 'linux'
-        shell: bash
-        run: |
-          npx prebuildify --napi --platform linux --arch x64
 
       - name: Verify prebuild output
         if: matrix.platform == 'win32'
