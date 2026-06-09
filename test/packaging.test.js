@@ -96,6 +96,21 @@ function testPublishGuardScriptExists() {
   });
 }
 
+function testBuildScriptRefreshesAutotools() {
+  const buildScript = readProjectFile("scripts/build-libraw.sh");
+
+  [
+    'if [ "$PLATFORM" != "windows" ]; then',
+    "autoreconf --force --install -I m4",
+    "aclocal-1.18",
+  ].forEach((snippet) => {
+    assert(
+      buildScript.includes(snippet),
+      `构建脚本缺少 Linux/macOS autotools 兼容修复: ${snippet}`
+    );
+  });
+}
+
 function runPackagingTests() {
   console.log("📦 Packaging Regression Tests");
   console.log("=".repeat(40));
@@ -108,6 +123,9 @@ function runPackagingTests() {
 
   testPublishGuardScriptExists();
   console.log("✅ 本地发布保护已启用");
+
+  testBuildScriptRefreshesAutotools();
+  console.log("✅ 非 Windows 构建会先刷新 autotools 文件");
 }
 
 if (require.main === module) {

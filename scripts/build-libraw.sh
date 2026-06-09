@@ -61,8 +61,14 @@ echo "📋 架构: $ARCH"
 # 进入源码目录
 cd "$SOURCE_DIR"
 
-# 检查并使用 configure 脚本
-if [ ! -f "./configure" ]; then
+# 检查并刷新 autotools 生成文件
+# LibRaw 发布包里可能带着由不同 automake 版本生成的 aclocal.m4 / configure / Makefile.in。
+# 在 CI runner 上直接 make 时，这些旧文件会触发对特定版本命令（如 aclocal-1.18）的依赖。
+# 非 Windows 平台统一用当前环境强制重新生成一次，避免版本化工具名不匹配。
+if [ "$PLATFORM" != "windows" ]; then
+  echo "🔧 使用当前环境刷新 autotools 生成文件..."
+  autoreconf --force --install -I m4
+elif [ ! -f "./configure" ]; then
   echo "🔧 生成 configure 脚本..."
   autoreconf --install
 else
