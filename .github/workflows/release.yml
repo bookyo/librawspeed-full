@@ -241,6 +241,28 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
+      - name: Determine release mode
+        id: release_meta
+        shell: bash
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+            echo "Publishing release for tag ${GITHUB_REF#refs/tags/}"
+          else
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "tag=v$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Release mode"
+              echo ""
+              echo "This run was triggered from \`${GITHUB_REF}\`, so npm publish and GitHub Release upload are skipped."
+              echo "Push tag \`v$PACKAGE_VERSION\` to publish \`librawspeed-full@$PACKAGE_VERSION\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Clean existing prebuilds in workspace (before download)
         shell: bash
         run: |
@@ -328,18 +350,20 @@ jobs:
       # Tests已在各平台构建作业跑过，这里跳过
 
       - name: Publish to npm
+        if: steps.release_meta.outputs.should_publish == 'true'
         run: npm publish --ignore-scripts
         env:
           NPM_CONFIG_IGNORE_SCRIPTS: "true"
 
       - name: Create GitHub Release
         id: create_release
+        if: steps.release_meta.outputs.should_publish == 'true'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.release_meta.outputs.tag }}
+          release_name: Release ${{ steps.release_meta.outputs.tag }}
           body: |
             ## 🎉 LibRaw Node.js 模块发布
 
@@ -360,7 +384,7 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset (macOS ARM64)
-        if: ${{ always() && hashFiles('prebuilds/darwin-arm64/librawspeed-full.node') != '' }}
+        if: ${{ steps.release_meta.outputs.should_publish == 'true' && steps.create_release.outputs.upload_url != '' && hashFiles('prebuilds/darwin-arm64/librawspeed-full.node') != '' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -371,7 +395,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (macOS x64)
-        if: ${{ always() && hashFiles('prebuilds/darwin-x64/librawspeed-full.node') != '' }}
+        if: ${{ steps.release_meta.outputs.should_publish == 'true' && steps.create_release.outputs.upload_url != '' && hashFiles('prebuilds/darwin-x64/librawspeed-full.node') != '' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -382,7 +406,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (Linux x64)
-        if: ${{ always() && hashFiles('prebuilds/linux-x64/librawspeed-full.node') != '' }}
+        if: ${{ steps.release_meta.outputs.should_publish == 'true' && steps.create_release.outputs.upload_url != '' && hashFiles('prebuilds/linux-x64/librawspeed-full.node') != '' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -393,7 +417,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (Windows x64)
-        if: ${{ always() && hashFiles('prebuilds/win32-x64/librawspeed-full.node') != '' }}
+        if: ${{ steps.release_meta.outputs.should_publish == 'true' && steps.create_release.outputs.upload_url != '' && hashFiles('prebuilds/win32-x64/librawspeed-full.node') != '' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
