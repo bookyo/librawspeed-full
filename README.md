@@ -2,11 +2,11 @@
 
 一个使用 LibRaw 库处理 RAW 图像文件的高性能 Node.js 原生插件。
 
-[![npm version](https://badge.fury.io/js/librawspeed.svg)](https://www.npmjs.com/package/librawspeed)
+[![npm version](https://badge.fury.io/js/librawspeed-full.svg)](https://www.npmjs.com/package/librawspeed-full)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![NPM Downloads](https://img.shields.io/npm/dt/librawspeed.svg)](https://www.npmjs.com/package/librawspeed)
+[![NPM Downloads](https://img.shields.io/npm/dt/librawspeed-full.svg)](https://www.npmjs.com/package/librawspeed-full)
 
 ## 功能特性
 
@@ -54,10 +54,10 @@ LibRaw 支持 100+ RAW 格式，包括：
 ### 📦 从 NPM 注册表
 
 ```bash
-npm install librawspeed
+npm install librawspeed-full
 ```
 
-**版本 1.0.18** 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed) 上可用！🎉
+**版本 1.0.18** 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed-full) 上可用！🎉
 
 ### 🛠️ 构建要求
 
@@ -115,7 +115,7 @@ npm install --force
 安装后，验证包是否正常工作：
 
 ```bash
-node -e "const LibRaw = require('librawspeed'); console.log('LibRaw version:', LibRaw.getVersion());"
+node -e "const LibRaw = require('librawspeed-full'); console.log('LibRaw version:', LibRaw.getVersion());"
 ```
 
 预期输出：`LibRaw version: 0.21.4-Release`
@@ -137,7 +137,12 @@ node -e "const LibRaw = require('librawspeed'); console.log('LibRaw version:', L
 - ✅ macOS x64（Intel）
 - ✅ macOS ARM64（Apple Silicon）
 - ✅ Linux x64
-- ✅ Linux ARM64
+
+当前 npm 预编译包发布目标：
+- `win32-x64`
+- `darwin-x64`
+- `darwin-arm64`
+- `linux-x64`
 
 **快速设置：**
 ```bash
@@ -151,7 +156,7 @@ npm run cross-compile:all
 ## 快速开始
 
 ```javascript
-const LibRaw = require("librawspeed");
+const LibRaw = require("librawspeed-full");
 
 async function processRAW() {
   // 🆕 检查文件是否为 LibRaw 支持的 RAW 格式
@@ -1110,7 +1115,7 @@ npm test path/to/your/photo.cr2
 从 RAW 文件中提取高质量缩略图：
 
 ```javascript
-const LibRaw = require("librawspeed");
+const LibRaw = require("librawspeed-full");
 
 async function extractThumbnails() {
   const processor = new LibRaw();
@@ -1195,7 +1200,7 @@ npm run extract:thumbnails
 ## 项目结构
 
 ```
-librawspeed/
+librawspeed-full/
 ├── src/                         # C++ 源文件
 │   ├── addon.cpp               # 主要插件入口点
 │   ├── libraw_wrapper.cpp      # LibRaw C++ 包装器（50+ 方法）
@@ -1229,8 +1234,7 @@ librawspeed/
 │               ├── win32/     # Windows x64
 │               ├── darwin-x64/ # macOS Intel
 │               ├── darwin-arm64/ # macOS Apple Silicon
-│               ├── linux-x64/ # Linux x64
-│               └── linux-arm64/ # Linux ARM64
+│               └── linux-x64/ # Linux x64
 ├── binding.gyp                # 构建配置
 ├── package.json               # 项目配置
 └── README.md                  # 此文件
@@ -1362,15 +1366,15 @@ npm run build  # 重新构建并复制 DLL
 
 **✅ 已发布到 NPM 注册表！**
 
-- **包**：[`librawspeed@1.0.8`](https://www.npmjs.com/package/librawspeed)
+- **包**：[`librawspeed-full@1.0.8`](https://www.npmjs.com/package/librawspeed-full)
 - **发布日期**：2025年8月30日
 - **总文件数**：487 个文件（4.0 MB 包，18.1 MB 解压后）
-- **注册表**：[npmjs.com](https://www.npmjs.com/package/librawspeed)
+- **注册表**：[npmjs.com](https://www.npmjs.com/package/librawspeed-full)
 
 ### 安装命令
 
 ```bash
-npm install librawspeed
+npm install librawspeed-full
 ```
 
 ### 下载统计
@@ -1401,9 +1405,9 @@ npm install librawspeed
 
 ## 支持
 
-- 📖 [文档](https://github.com/pixFlowTeam/librawspeed#readme)
-- 🐛 [问题](https://github.com/pixFlowTeam/librawspeed/issues)
-- 💬 [讨论](https://github.com/pixFlowTeam/librawspeed/discussions)
+- 📖 [文档](https://github.com/bookyo/librawspeed-full#readme)
+- 🐛 [问题](https://github.com/bookyo/librawspeed-full/issues)
+- 💬 [讨论](https://github.com/bookyo/librawspeed-full/discussions)
 
 ---
 

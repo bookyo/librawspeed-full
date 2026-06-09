@@ -198,4 +198,4 @@ DEBUG=* npm run release:patch
 - [bumpp 官方文档](https://github.com/antfu/bumpp)
 - [npm 发布指南](docs/NPM_PUBLISH_GUIDE.md)
 - [API 文档](docs/API.md)
-- [项目仓库](https://github.com/pixFlowTeam/librawspeed)
+- [项目仓库](https://github.com/bookyo/librawspeed-full)

@@ -8,9 +8,8 @@
 
 | 平台 | 架构 | Runner | 状态 |
 |------|------|--------|------|
-| Linux | x64 | ubuntu-latest | ✅ |
-| Linux | ARM64 | ubuntu-latest | ✅ |
-| macOS | x64 | macos-latest | ✅ |
+| Linux | x64 | ubuntu-24.04 | ✅ |
+| macOS | x64 | macos-13 | ✅ |
 | macOS | ARM64 | macos-latest | ✅ |
 | Windows | x64 | windows-latest | ✅ |
 
@@ -31,13 +30,8 @@
    - 运行 `prebuildify` 生成预构建文件
    - 上传平台特定的预构建文件
 
-2. **合并预构建文件** (`collect-prebuilds`)
+2. **发布** (`release`)
    - 下载所有平台的预构建文件
-   - 合并到统一的 prebuilds 目录
-   - 上传合并后的预构建文件
-
-3. **发布** (`release`)
-   - 下载合并后的预构建文件
    - 运行测试
    - 发布到 npm
    - 创建 GitHub Release
@@ -66,8 +60,6 @@ prebuilds/
 ├── darwin-arm64/
 │   └── librawspeed.node
 ├── darwin-x64/
-│   └── librawspeed.node
-├── linux-arm64/
 │   └── librawspeed.node
 ├── linux-x64/
 │   └── librawspeed.node

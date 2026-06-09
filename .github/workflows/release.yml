@@ -8,21 +8,36 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   build-prebuilds:
     strategy:
-      max-parallel: 2 # 最多同时运行2个平台，避免资源竞争
+      max-parallel: 3 # 控制并发，避免 runner 资源竞争
       fail-fast: false # 不因为一个作业失败而取消其他作业
       matrix:
         include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            runner: ubuntu-24.04
+            runner-type: ubuntu-24.04
+            cores: 4
+            memory: 16
+          - os: macos-13
+            platform: darwin
+            arch: x64
+            runner: macos-13
+            runner-type: macos-13
+            cores: 4
+            memory: 14
           - os: macos-latest
             platform: darwin
             arch: arm64
             runner: macos-latest
             runner-type: macos-14
             cores: 10
-            memory: 32
+            memory: 14
           - os: windows-latest
             platform: win32
             arch: x64
@@ -160,14 +175,15 @@ jobs:
         run: |
           npx prebuildify --napi --platform darwin --arch ${{ matrix.arch }}
 
-      - name: Verify prebuild output (macOS)
-        if: matrix.platform == 'darwin'
+      - name: Verify prebuild output (POSIX)
+        if: matrix.platform != 'win32'
         shell: bash
         run: |
-          echo "Verifying macOS prebuild exists"
+          echo "Verifying POSIX prebuild exists"
           ls -la prebuilds || true
-          if [ ! -f prebuilds/darwin-arm64/librawspeed.node ]; then
-            echo "Missing macOS prebuild at prebuilds/darwin-arm64/librawspeed.node" >&2
+          PREBUILD_PATH="prebuilds/${{ matrix.platform }}-${{ matrix.arch }}/librawspeed-full.node"
+          if [ ! -f "$PREBUILD_PATH" ]; then
+            echo "Missing prebuild at $PREBUILD_PATH" >&2
             exit 2
           fi
 
@@ -183,8 +199,8 @@ jobs:
         run: |
           echo Verifying Windows prebuild exists
           dir prebuilds\
-          if not exist prebuilds\win32-x64\librawspeed.node (
-            echo Missing Windows prebuild at prebuilds\win32-x64\librawspeed.node
+          if not exist prebuilds\win32-x64\librawspeed-full.node (
+            echo Missing Windows prebuild at prebuilds\win32-x64\librawspeed-full.node
             exit /b 2
           )
           echo Windows prebuild verified successfully
@@ -248,41 +264,72 @@ jobs:
         run: |
           set -e
           echo "Validating binary formats:"
-          # Require both platforms present
-          if [ ! -f prebuilds/win32-x64/librawspeed.node ]; then
-            echo "ERROR: missing prebuilds/win32-x64/librawspeed.node" >&2
-            exit 1
-          fi
-          if [ ! -f prebuilds/darwin-arm64/librawspeed.node ]; then
-            echo "ERROR: missing prebuilds/darwin-arm64/librawspeed.node" >&2
-            exit 1
-          fi
+          REQUIRED_PREBUILDS=(
+            "prebuilds/linux-x64/librawspeed-full.node"
+            "prebuilds/darwin-x64/librawspeed-full.node"
+            "prebuilds/darwin-arm64/librawspeed-full.node"
+            "prebuilds/win32-x64/librawspeed-full.node"
+          )
+
+          for prebuild in "${REQUIRED_PREBUILDS[@]}"; do
+            if [ ! -f "$prebuild" ]; then
+              echo "ERROR: missing $prebuild" >&2
+              exit 1
+            fi
+          done
+
           # Windows must be PE/COFF (MZ)
-          if hexdump -n 2 -e '2/1 "%02x"' prebuilds/win32-x64/librawspeed.node | grep -qi '^4d5a$'; then
+          if [ ! -f prebuilds/win32-x64/librawspeed-full.node ]; then
+            echo "ERROR: missing prebuilds/win32-x64/librawspeed-full.node" >&2
+            exit 1
+          fi
+          # Linux must be ELF
+          if hexdump -n 4 -e '4/1 "%02x"' prebuilds/linux-x64/librawspeed-full.node | grep -qi '^7f454c46$'; then
+            echo "OK: linux-x64 is ELF"
+          else
+            echo "ERROR: linux-x64/librawspeed-full.node is not ELF" >&2
+            file prebuilds/linux-x64/librawspeed-full.node || true
+            exit 1
+          fi
+          # macOS x64 must be Mach-O
+          if hexdump -n 4 -e '4/1 "%02x"' prebuilds/darwin-x64/librawspeed-full.node | grep -qi '^cffaedfe$'; then
+            echo "OK: darwin-x64 is Mach-O"
+          else
+            echo "ERROR: darwin-x64/librawspeed-full.node is not Mach-O" >&2
+            file prebuilds/darwin-x64/librawspeed-full.node || true
+            exit 1
+          fi
+          if [ ! -f prebuilds/darwin-arm64/librawspeed-full.node ]; then
+            echo "ERROR: missing prebuilds/darwin-arm64/librawspeed-full.node" >&2
+            exit 1
+          fi
+          if hexdump -n 2 -e '2/1 "%02x"' prebuilds/win32-x64/librawspeed-full.node | grep -qi '^4d5a$'; then
             echo "OK: win32-x64 is PE/COFF"
           else
-            echo "ERROR: win32-x64/librawspeed.node is not PE/COFF" >&2
-            file prebuilds/win32-x64/librawspeed.node || true
+            echo "ERROR: win32-x64/librawspeed-full.node is not PE/COFF" >&2
+            file prebuilds/win32-x64/librawspeed-full.node || true
             exit 1
           fi
           # macOS must be Mach-O (cffaedfe)
-          if hexdump -n 4 -e '4/1 "%02x"' prebuilds/darwin-arm64/librawspeed.node | grep -qi '^cffaedfe$'; then
+          if hexdump -n 4 -e '4/1 "%02x"' prebuilds/darwin-arm64/librawspeed-full.node | grep -qi '^cffaedfe$'; then
             echo "OK: darwin-arm64 is Mach-O"
           else
-            echo "ERROR: darwin-arm64/librawspeed.node is not Mach-O" >&2
-            file prebuilds/darwin-arm64/librawspeed.node || true
+            echo "ERROR: darwin-arm64/librawspeed-full.node is not Mach-O" >&2
+            file prebuilds/darwin-arm64/librawspeed-full.node || true
             exit 1
           fi
 
       - name: Install dependencies (no scripts)
         run: npm ci --ignore-scripts
 
+      - name: Run packaging regression tests
+        run: npm run test:packaging
+
       # Tests已在各平台构建作业跑过，这里跳过
 
       - name: Publish to npm
         run: npm publish --ignore-scripts
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_IGNORE_SCRIPTS: "true"
 
       - name: Create GitHub Release
@@ -297,12 +344,14 @@ jobs:
             ## 🎉 LibRaw Node.js 模块发布
 
             ### 📦 包含的预构建文件
+            - Linux x64
+            - macOS x64 (Intel)
             - macOS ARM64 (Apple Silicon)
             - Windows x64
 
             ### 🚀 安装
             ```bash
-            npm install librawspeed
+            npm install librawspeed-full
             ```
 
             ### 📋 变更日志
@@ -311,23 +360,45 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset (macOS ARM64)
-        if: ${{ always() && hashFiles('prebuilds/darwin-arm64/librawspeed.node') != '' }}
+        if: ${{ always() && hashFiles('prebuilds/darwin-arm64/librawspeed-full.node') != '' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: prebuilds/darwin-arm64/librawspeed.node
-          asset_name: librawspeed-darwin-arm64.node
+          asset_path: prebuilds/darwin-arm64/librawspeed-full.node
+          asset_name: librawspeed-full-darwin-arm64.node
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS x64)
+        if: ${{ always() && hashFiles('prebuilds/darwin-x64/librawspeed-full.node') != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: prebuilds/darwin-x64/librawspeed-full.node
+          asset_name: librawspeed-full-darwin-x64.node
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Linux x64)
+        if: ${{ always() && hashFiles('prebuilds/linux-x64/librawspeed-full.node') != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: prebuilds/linux-x64/librawspeed-full.node
+          asset_name: librawspeed-full-linux-x64.node
           asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (Windows x64)
-        if: ${{ always() && hashFiles('prebuilds/win32-x64/librawspeed.node') != '' }}
+        if: ${{ always() && hashFiles('prebuilds/win32-x64/librawspeed-full.node') != '' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: prebuilds/win32-x64/librawspeed.node
-          asset_name: librawspeed-win32-x64.node
+          asset_path: prebuilds/win32-x64/librawspeed-full.node
+          asset_name: librawspeed-full-win32-x64.node
           asset_content_type: application/octet-stream

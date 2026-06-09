@@ -2,11 +2,36 @@
 
 ## 📦 概述
 
-本指南详细说明如何将 librawspeed 项目发布到 npm 注册表。
+本指南详细说明如何将 `librawspeed-full` 发布到 npm 注册表。
+
+> 注意：不要在本地机器直接执行 `npm publish` 作为正式发布方式。
+> 正式 npm 包必须同时包含 `linux-x64`、`darwin-x64`、`darwin-arm64`、`win32-x64`
+> 四个预编译产物，本地发布通常只会带上当前机器已有的平台目录。
 
 ## 🚀 快速发布
 
-### 使用 bumpp 自动发布（推荐）
+### 使用 GitHub Actions 聚合 4 平台产物后发布（推荐）
+
+正式发布流程：
+
+```bash
+# 1. 确认代码和版本
+npm test
+
+# 2. 提交并打 tag
+git tag v1.0.130
+git push origin main --tags
+
+# 3. 等待 GitHub Actions 的 release workflow:
+#    - linux-x64
+#    - darwin-x64
+#    - darwin-arm64
+#    - win32-x64
+#
+# 4. workflow 下载并合并全部 prebuilds 后执行 npm publish
+```
+
+### bumpp 只负责版本号，不负责跨平台聚合发布
 
 ```bash
 # 发布补丁版本 (1.0.8 -> 1.0.1)
@@ -56,24 +81,15 @@ bumpp 已完全集成交叉编译流程，一键完成所有步骤：
 - ✅ 自动版本管理
 - ✅ 自动 Git 操作
 
-### 手动发布
+### 本地手动发布
 
 ```bash
-# 1. 运行测试
-npm test
-
-# 2. 构建项目
-npm run build
-
-# 3. 交叉编译（可选，用于多平台支持）
-npm run cross-compile:all
-
-# 4. 预览发布内容
-npm run publish:dry
-
-# 5. 发布到 npm
-npm run publish:public
+# 仅用于调试，不推荐作为正式 npm 发布方式
+npm pack --dry-run
 ```
+
+如果你本地执行 `npm publish`，最终上传的只会是当前工作区已有的 `prebuilds/**/*`。
+例如在 Apple Silicon 上本地构建并发布，npm 页面通常只会看到 `prebuilds/darwin-arm64/`。
 
 ## 🔧 发布配置
 
@@ -579,8 +595,8 @@ npm test
 
 ## 🔗 相关链接
 
-- [npm 包页面](https://www.npmjs.com/package/librawspeed)
-- [GitHub 仓库](https://github.com/pixFlowTeam/librawspeed)
+- [npm 包页面](https://www.npmjs.com/package/librawspeed-full)
+- [GitHub 仓库](https://github.com/bookyo/librawspeed-full)
 - [API 文档](docs/API.md)
 - [变更日志](CHANGELOG.md)
 

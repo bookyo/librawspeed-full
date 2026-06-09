@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# 本地发布脚本
-# 完全本地化构建和发布流程
+# 发布脚本
+# 默认阻止本地直接发包，避免只发出当前机器的平台产物
 
 echo "🚀 开始本地发布流程..."
 echo "=================================="
@@ -29,6 +29,19 @@ fi
 # 运行测试
 echo "🧪 运行测试..."
 npm test
+
+echo ""
+echo "📦 检查官方发布预编译产物..."
+if ! npm run verify:release-prebuilds; then
+    echo ""
+    echo "❌ 已阻止本地直接 npm publish。"
+    echo "请改用 GitHub Actions 的 release workflow："
+    echo "1. 推送代码"
+    echo "2. 打 tag，例如 git tag v1.0.130 && git push origin v1.0.130"
+    echo "3. 等待 workflow 构建 linux-x64 / darwin-x64 / darwin-arm64 / win32-x64"
+    echo "4. 由 workflow 聚合后发布到 npm"
+    exit 1
+fi
 
 # 确认发布
 echo ""

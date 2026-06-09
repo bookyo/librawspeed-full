@@ -11,7 +11,7 @@ function generateAPIDocumentation() {
 
   const apiDocs = `# API 文档
 
-**版本 ${version}** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed) 上可用！🎉
+**版本 ${version}** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed-full) 上可用！🎉
 
 ## LibRaw 类
 
@@ -20,7 +20,7 @@ function generateAPIDocumentation() {
 ### 构造函数
 
 \`\`\`javascript
-const LibRaw = require('librawspeed');
+const LibRaw = require('librawspeed-full');
 const processor = new LibRaw();
 \`\`\`
 
@@ -138,7 +138,7 @@ try {
 ## 完整示例
 
 \`\`\`javascript
-const LibRaw = require('librawspeed');
+const LibRaw = require('librawspeed-full');
 
 async function processRAWFile(filepath) {
   const processor = new LibRaw();
@@ -181,12 +181,12 @@ processRAWFile('/path/to/image.nef')
   // Generate usage examples
   const examples = `# 使用示例
 
-**版本 ${version}** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed) 上可用！🎉
+**版本 ${version}** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed-full) 上可用！🎉
 
 ## 基础 RAW 文件处理
 
 \`\`\`javascript
-const LibRaw = require('librawspeed');
+const LibRaw = require('librawspeed-full');
 
 async function basicExample() {
   const processor = new LibRaw();
@@ -383,7 +383,7 @@ async function robustProcessing(filepath) {
 \`\`\`javascript
 const express = require('express');
 const multer = require('multer');
-const LibRaw = require('librawspeed');
+const LibRaw = require('librawspeed-full');
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
@@ -441,7 +441,7 @@ app.post('/analyze-raw', upload.single('rawFile'), async (req, res) => {
   // Generate supported formats documentation
   const formats = `# 支持的 RAW 格式
 
-**版本 ${version}** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed) 上可用！🎉
+**版本 ${version}** - 现已在 [npmjs.com](https://www.npmjs.com/package/librawspeed-full) 上可用！🎉
 
 ## 概述
 
