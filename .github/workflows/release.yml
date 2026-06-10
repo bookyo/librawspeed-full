@@ -238,7 +238,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "22.14.0"
           registry-url: "https://registry.npmjs.org"
 
       - name: Determine release mode
@@ -349,9 +349,17 @@ jobs:
 
       # Tests已在各平台构建作业跑过，这里跳过
 
+      - name: Ensure trusted publishing prerequisites
+        if: steps.release_meta.outputs.should_publish == 'true'
+        shell: bash
+        run: |
+          npm install --global npm@11.6.2
+          echo "Node: $(node --version)"
+          echo "npm: $(npm --version)"
+
       - name: Publish to npm
         if: steps.release_meta.outputs.should_publish == 'true'
-        run: npm publish --ignore-scripts
+        run: npm publish --ignore-scripts --provenance --access public
         env:
           NPM_CONFIG_IGNORE_SCRIPTS: "true"
 
