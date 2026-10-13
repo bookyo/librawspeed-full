@@ -1179,6 +1179,26 @@ Napi::Value LibRawWrapper::CopyMemImage(const Napi::CallbackInfo &info)
     int stride = info[1].As<Napi::Number>().Int32Value();
     int bgr = info[2].As<Napi::Boolean>().Value() ? 1 : 0;
 
+    if (stride <= 0)
+    {
+        Napi::RangeError::New(env, "stride must be positive").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+    int fmtW = 0, fmtH = 0, fmtColors = 0, fmtBps = 0;
+    processor->get_mem_image_format(&fmtW, &fmtH, &fmtColors, &fmtBps);
+    size_t rowBytes = (size_t)fmtW * (size_t)fmtColors * (size_t)(fmtBps / 8);
+    if ((size_t)stride < rowBytes)
+    {
+        Napi::RangeError::New(env, "stride is smaller than one row of image data").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+    size_t requiredBytes = (size_t)fmtH * (size_t)stride;
+    if (buffer.Length() < requiredBytes)
+    {
+        Napi::RangeError::New(env, "buffer is too small for the image (need height*stride bytes)").ThrowAsJavaScriptException();
+        return env.Null();
+    }
+
     int ret = processor->copy_mem_image(buffer.Data(), stride, bgr);
     if (ret != LIBRAW_SUCCESS)
     {
@@ -1206,6 +1226,14 @@ Napi::Value LibRawWrapper::GetColorAt(const Napi::CallbackInfo &info)
     }
     int row = info[0].As<Napi::Number>().Int32Value();
     int col = info[1].As<Napi::Number>().Int32Value();
+
+    int rawW = processor->imgdata.sizes.raw_width;
+    int rawH = processor->imgdata.sizes.raw_height;
+    if (row < 0 || col < 0 || (rawW > 0 && col >= rawW) || (rawH > 0 && row >= rawH))
+    {
+        Napi::RangeError::New(env, "row/col out of range").ThrowAsJavaScriptException();
+        return env.Null();
+    }
 
     int color = processor->COLOR(row, col);
     return Napi::Number::New(env, color);
